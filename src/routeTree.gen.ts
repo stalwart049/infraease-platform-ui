@@ -10,33 +10,73 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ListTableNameRouteImport } from './routes/list.$tableName'
+import { Route as FormTableNameIndexRouteImport } from './routes/form.$tableName.index'
+import { Route as FormTableNameRecordIdRouteImport } from './routes/form.$tableName.$recordId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ListTableNameRoute = ListTableNameRouteImport.update({
+  id: '/list/$tableName',
+  path: '/list/$tableName',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FormTableNameIndexRoute = FormTableNameIndexRouteImport.update({
+  id: '/form/$tableName/',
+  path: '/form/$tableName/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FormTableNameRecordIdRoute = FormTableNameRecordIdRouteImport.update({
+  id: '/form/$tableName/$recordId',
+  path: '/form/$tableName/$recordId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/list/$tableName': typeof ListTableNameRoute
+  '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
+  '/form/$tableName/': typeof FormTableNameIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/list/$tableName': typeof ListTableNameRoute
+  '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
+  '/form/$tableName': typeof FormTableNameIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/list/$tableName': typeof ListTableNameRoute
+  '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
+  '/form/$tableName/': typeof FormTableNameIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/list/$tableName'
+    | '/form/$tableName/$recordId'
+    | '/form/$tableName/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    '/' | '/list/$tableName' | '/form/$tableName/$recordId' | '/form/$tableName'
+  id:
+    | '__root__'
+    | '/'
+    | '/list/$tableName'
+    | '/form/$tableName/$recordId'
+    | '/form/$tableName/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ListTableNameRoute: typeof ListTableNameRoute
+  FormTableNameRecordIdRoute: typeof FormTableNameRecordIdRoute
+  FormTableNameIndexRoute: typeof FormTableNameIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +88,35 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/list/$tableName': {
+      id: '/list/$tableName'
+      path: '/list/$tableName'
+      fullPath: '/list/$tableName'
+      preLoaderRoute: typeof ListTableNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/form/$tableName/': {
+      id: '/form/$tableName/'
+      path: '/form/$tableName'
+      fullPath: '/form/$tableName/'
+      preLoaderRoute: typeof FormTableNameIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/form/$tableName/$recordId': {
+      id: '/form/$tableName/$recordId'
+      path: '/form/$tableName/$recordId'
+      fullPath: '/form/$tableName/$recordId'
+      preLoaderRoute: typeof FormTableNameRecordIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ListTableNameRoute: ListTableNameRoute,
+  FormTableNameRecordIdRoute: FormTableNameRecordIdRoute,
+  FormTableNameIndexRoute: FormTableNameIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
