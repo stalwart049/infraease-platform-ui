@@ -17,9 +17,9 @@ export function Icon({
   className = "size-4",
   strokeWidth = 1.75,
 }: {
-  name?: string;
-  className?: string;
-  strokeWidth?: number;
+  name?: string | undefined;
+  className?: string | undefined;
+  strokeWidth?: number | undefined;
 }) {
   const Cmp = resolveIcon(name);
   if (!Cmp) return null;

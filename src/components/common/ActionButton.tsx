@@ -5,7 +5,7 @@ import { Icon } from "./Icon";
 type Variant = "primary" | "default" | "danger" | "ghost";
 
 interface Props extends ButtonHTMLAttributes<HTMLButtonElement> {
-  icon?: string;
+  icon?: string | undefined;
   variant?: Variant;
   loading?: boolean;
   /** hide the label below md */
