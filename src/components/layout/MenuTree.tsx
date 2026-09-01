@@ -30,7 +30,7 @@ export function MenuTree({
             {node.route ? (
               <Link
                 {...menuLinkProps(node.route)}
-                onClick={onNavigate}
+                {...(onNavigate ? { onClick: onNavigate } : {})}
                 activeProps={{ className: "bg-accent text-accent-foreground font-medium" }}
                 className="flex items-center gap-2 rounded-[3px] py-1.5 pr-2 text-[13px] text-foreground transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
                 style={{ paddingLeft: 8 + depth * 14 }}
