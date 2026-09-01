@@ -79,14 +79,20 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "InfraEase — Enterprise Service Management" },
+      {
+        name: "description",
+        content:
+          "InfraEase is a metadata-driven enterprise service management platform for incidents, requests, assets and people.",
+      },
+      { name: "author", content: "InfraEase" },
+      { property: "og:title", content: "InfraEase — Enterprise Service Management" },
+      {
+        property: "og:description",
+        content: "Metadata-driven forms, lists and navigation for enterprise service management.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {
