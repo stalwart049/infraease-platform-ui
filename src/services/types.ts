@@ -114,7 +114,9 @@ export interface ListQuery {
   query?: string;
   sortBy?: string | null;
   sortOrder?: "asc" | "desc";
+  filters?: FilterCondition[];
 }
+
 
 export interface MenuNode {
   id: string;
