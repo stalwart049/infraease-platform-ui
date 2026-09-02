@@ -1,18 +1,29 @@
+import { useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useList } from "@/hooks/useList";
+import { listService } from "@/services/listService";
 import { ListHeader } from "./ListHeader";
 import { FilterBar } from "./FilterBar";
+import { FilterBuilder } from "./FilterBuilder";
+import { ColumnPicker } from "./ColumnPicker";
 import { ListTable } from "./ListTable";
 import { Pagination } from "./Pagination";
+import { BulkActionBar } from "./BulkActionBar";
 import { ActionButton } from "@/components/common/ActionButton";
+import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { StateBlock } from "@/components/form/FormView";
-import type { ActionMeta } from "@/services/types";
+import type { ActionMeta, RecordValue } from "@/services/types";
 
 export function ListView({ tableName }: { tableName: string }) {
   const navigate = useNavigate();
   const list = useList(tableName);
   const label = list.meta?.table.plural_label ?? tableName.replace(/_/g, " ");
+
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [columnsOpen, setColumnsOpen] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
 
   function handleAction(action: ActionMeta) {
     switch (action.id) {
@@ -22,12 +33,47 @@ export function ListView({ tableName }: { tableName: string }) {
       case "refresh":
         list.refresh();
         break;
+      case "configure":
+      case "personalize":
+        setColumnsOpen(true);
+        break;
       default:
         toast.info(`${action.label} is provided by the InfraEase backend.`);
     }
   }
 
-  const hasQuery = list.debouncedQuery.trim().length > 0;
+  const selectedIds = Array.from(list.selected);
+
+  async function bulkDelete() {
+    setConfirmDelete(false);
+    setBulkBusy(true);
+    try {
+      const removed = await listService.deleteRecords(tableName, selectedIds);
+      list.clearSelection();
+      list.refresh();
+      toast.success(`${removed} ${removed === 1 ? "record" : "records"} deleted`);
+    } catch {
+      toast.error("Unable to delete the selected records.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  async function bulkUpdate(field: string, value: RecordValue) {
+    setBulkBusy(true);
+    try {
+      const updated = await listService.updateRecords(tableName, selectedIds, { [field]: value });
+      list.clearSelection();
+      list.refresh();
+      toast.success(`${updated} ${updated === 1 ? "record" : "records"} updated`);
+    } catch {
+      toast.error("Unable to update the selected records.");
+    } finally {
+      setBulkBusy(false);
+    }
+  }
+
+  const hasQuery = list.debouncedQuery.trim().length > 0 || list.activeFilters.length > 0;
 
   return (
     <div className="min-h-full bg-canvas pb-10">
@@ -47,7 +93,24 @@ export function ListView({ tableName }: { tableName: string }) {
             selectedCount={list.selected.size}
             onClearSelection={list.clearSelection}
             tableLabel={label}
+            activeFilters={list.activeFilters}
+            columns={list.allColumns}
+            onOpenFilters={() => setFilterOpen(true)}
+            onRemoveFilter={(id) => list.applyFilters(list.filters.filter((f) => f.id !== id))}
+            onOpenColumns={() => setColumnsOpen(true)}
+            personalized={list.personalized}
           />
+
+          {list.selected.size > 0 && (
+            <BulkActionBar
+              count={list.selected.size}
+              columns={list.columns}
+              busy={bulkBusy}
+              onUpdate={(field, value) => void bulkUpdate(field, value)}
+              onDelete={() => setConfirmDelete(true)}
+              onClear={list.clearSelection}
+            />
+          )}
 
           {list.error ? (
             <StateBlock
@@ -67,8 +130,14 @@ export function ListView({ tableName }: { tableName: string }) {
                 title="No records found"
                 body="Try changing your search or filter."
                 action={
-                  <ActionButton icon="x" onClick={() => list.setQuery("")}>
-                    Clear search
+                  <ActionButton
+                    icon="x"
+                    onClick={() => {
+                      list.setQuery("");
+                      list.applyFilters([]);
+                    }}
+                  >
+                    Clear search and filters
                   </ActionButton>
                 }
               />
@@ -124,6 +193,42 @@ export function ListView({ tableName }: { tableName: string }) {
           )}
         </div>
       </div>
+
+      <FilterBuilder
+        open={filterOpen}
+        columns={list.allColumns}
+        value={list.filters}
+        onApply={(conditions) => {
+          list.applyFilters(conditions);
+          setFilterOpen(false);
+        }}
+        onClose={() => setFilterOpen(false)}
+      />
+
+      <ColumnPicker
+        open={columnsOpen}
+        allColumns={list.allColumns}
+        selected={list.columns.map((c) => c.name)}
+        onApply={(names) => {
+          list.setVisibleColumns(names);
+          setColumnsOpen(false);
+        }}
+        onReset={() => {
+          list.resetColumns();
+          setColumnsOpen(false);
+        }}
+        onClose={() => setColumnsOpen(false)}
+      />
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete selected records?"
+        body={`${selectedIds.length} ${selectedIds.length === 1 ? "record" : "records"} will be permanently deleted.`}
+        confirmLabel="Delete"
+        destructive
+        onConfirm={() => void bulkDelete()}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }
