@@ -138,3 +138,23 @@ export interface ProfileMenuItem {
   icon: string;
   separator_before?: boolean;
 }
+
+// ---------------------------------------------------------------- filtering
+
+export type FilterOperator =
+  | "is"
+  | "is_not"
+  | "contains"
+  | "not_contains"
+  | "starts_with"
+  | "is_empty"
+  | "is_not_empty"
+  | "greater_than"
+  | "less_than";
+
+export interface FilterCondition {
+  id: string;
+  field: string;
+  operator: FilterOperator;
+  value: string;
+}
