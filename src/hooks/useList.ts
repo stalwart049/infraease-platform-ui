@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listService } from "@/services/listService";
-import type { ListMetadata, Page, DataRecord } from "@/services/types";
+import type {
+  ListMetadata,
+  Page,
+  DataRecord,
+  FilterCondition,
+  FieldMeta,
+} from "@/services/types";
+
+const COLUMN_KEY = (table: string) => `infraease.columns.${table}`;
 
 export function useList(tableName: string) {
   const queryClient = useQueryClient();
@@ -12,6 +20,8 @@ export function useList(tableName: string) {
   const [sortBy, setSortBy] = useState<string | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [filters, setFilters] = useState<FilterCondition[]>([]);
+  const [columnOrder, setColumnOrder] = useState<string[] | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -26,10 +36,66 @@ export function useList(tableName: string) {
     queryFn: () => listService.getListMetadata(tableName),
   });
 
-  const recordsKey = ["records", tableName, page, pageSize, debouncedQuery, sortBy, sortOrder] as const;
+  // personalization is client-side and persisted per table (SSR safe)
+  useEffect(() => {
+    const stored = window.localStorage.getItem(COLUMN_KEY(tableName));
+    setColumnOrder(stored ? (JSON.parse(stored) as string[]) : null);
+  }, [tableName]);
+
+  const allColumns: FieldMeta[] = useMemo(() => metaQuery.data?.columns ?? [], [metaQuery.data]);
+
+  const columns = useMemo(() => {
+    if (!columnOrder) return allColumns;
+    const picked = columnOrder
+      .map((name) => allColumns.find((c) => c.name === name))
+      .filter((c): c is FieldMeta => Boolean(c));
+    return picked.length ? picked : allColumns;
+  }, [allColumns, columnOrder]);
+
+  const setVisibleColumns = useCallback(
+    (names: string[]) => {
+      setColumnOrder(names);
+      window.localStorage.setItem(COLUMN_KEY(tableName), JSON.stringify(names));
+    },
+    [tableName],
+  );
+
+  const resetColumns = useCallback(() => {
+    setColumnOrder(null);
+    window.localStorage.removeItem(COLUMN_KEY(tableName));
+  }, [tableName]);
+
+  const activeFilters = useMemo(
+    () =>
+      filters.filter(
+        (f) =>
+          f.field &&
+          (f.operator === "is_empty" || f.operator === "is_not_empty" || f.value.trim().length > 0),
+      ),
+    [filters],
+  );
+
+  const recordsKey = [
+    "records",
+    tableName,
+    page,
+    pageSize,
+    debouncedQuery,
+    sortBy,
+    sortOrder,
+    activeFilters,
+  ] as const;
   const recordsQuery = useQuery<Page<DataRecord>>({
     queryKey: recordsKey,
-    queryFn: () => listService.getRecords(tableName, { page, pageSize, query: debouncedQuery, sortBy, sortOrder }),
+    queryFn: () =>
+      listService.getRecords(tableName, {
+        page,
+        pageSize,
+        query: debouncedQuery,
+        sortBy,
+        sortOrder,
+        filters: activeFilters,
+      }),
     placeholderData: (prev) => prev,
   });
 
@@ -70,6 +136,11 @@ export function useList(tableName: string) {
     void queryClient.invalidateQueries({ queryKey: ["records", tableName] });
   }, [queryClient, tableName]);
 
+  const applyFilters = useCallback((next: FilterCondition[]) => {
+    setFilters(next);
+    setPage(0);
+  }, []);
+
   const pageInfo = useMemo(() => {
     const data = recordsQuery.data;
     const total = data?.totalElements ?? 0;
@@ -80,7 +151,11 @@ export function useList(tableName: string) {
 
   return {
     meta: metaQuery.data ?? null,
-    columns: metaQuery.data?.columns ?? [],
+    allColumns,
+    columns,
+    setVisibleColumns,
+    resetColumns,
+    personalized: columnOrder !== null,
     records,
     loading: recordsQuery.isLoading || metaQuery.isLoading,
     fetching: recordsQuery.isFetching,
@@ -95,6 +170,9 @@ export function useList(tableName: string) {
     query,
     setQuery,
     debouncedQuery,
+    filters,
+    activeFilters,
+    applyFilters,
     sortBy,
     sortOrder,
     toggleSort,
