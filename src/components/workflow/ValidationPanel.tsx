@@ -15,7 +15,7 @@ export function ValidationPanel({ issues, onClose, onSelect }: Props) {
           name={issues.length ? "triangle-alert" : "check"}
           className={issues.length ? "size-4 text-destructive" : "size-4 text-success"}
         />
-        <p className="flex-1 text-[12px] font-semibold text-foreground">
+        <p className="flex-1 text-[13.5px] font-semibold text-foreground">
           {issues.length
             ? `${issues.length} validation issue${issues.length === 1 ? "" : "s"}`
             : "No validation issues — this workflow is ready to save."}
@@ -36,7 +36,7 @@ export function ValidationPanel({ issues, onClose, onSelect }: Props) {
               type="button"
               disabled={!issue.nodeId}
               onClick={() => issue.nodeId && onSelect(issue.nodeId)}
-              className="flex w-full items-start gap-2 px-3 py-1.5 text-left text-[12px] text-foreground hover:bg-muted disabled:hover:bg-transparent"
+              className="flex w-full items-start gap-2 px-3 py-2 text-left text-[13.5px] text-foreground hover:bg-muted disabled:hover:bg-transparent"
             >
               <Icon name="dot" className="mt-0.5 size-3.5 shrink-0 text-destructive" />
               <span className="flex-1">{issue.message}</span>

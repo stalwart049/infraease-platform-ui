@@ -4,7 +4,6 @@ import {
   BackgroundVariant,
   Controls,
   MarkerType,
-  MiniMap,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -13,6 +12,7 @@ import {
   type EdgeChange,
   type NodeChange,
   type OnSelectionChangeParams,
+
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useNavigate } from "@tanstack/react-router";
@@ -32,7 +32,14 @@ import { WorkflowPalette } from "./WorkflowPalette";
 import { WorkflowToolbar } from "./WorkflowToolbar";
 import { ValidationPanel } from "./ValidationPanel";
 import { NodeConfigDrawer } from "./NodeConfigDrawer";
-import { WorkflowNodeCard, WorkflowUIContext, type WFNode } from "./WorkflowNodeCard";
+import {
+  WorkflowNodeCard,
+  WorkflowUIContext,
+  targetHandleId,
+  type TargetSide,
+  type WFNode,
+} from "./WorkflowNodeCard";
+
 import type { WorkflowComponentMeta, WorkflowDefinition, WorkflowNode } from "@/services/types";
 
 const nodeTypes = { workflow: WorkflowNodeCard };
@@ -64,7 +71,7 @@ function Editor({ workflowId }: { workflowId: string }) {
   const [configuringId, setConfiguringId] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
   const [collapsed, setCollapsed] = useState(false);
-  const [minimap, setMinimap] = useState(true);
+  
   const [snap, setSnap] = useState(true);
   const [zoom, setZoom] = useState(1);
   const [issues, setIssues] = useState<WorkflowIssue[] | null>(null);
@@ -88,21 +95,56 @@ function Editor({ workflowId }: { workflowId: string }) {
     [definition, selection.nodes],
   );
 
-  const edges = useMemo<Edge[]>(
-    () =>
-      (definition?.connections ?? []).map((c) => ({
+  const edges = useMemo<Edge[]>(() => {
+    const list = definition?.connections ?? [];
+    const byId = new Map((definition?.nodes ?? []).map((n) => [n.sys_id, n]));
+    const sizeOf = (n?: WorkflowNode) => {
+      const compact = n?.type === "start" || n?.type === "end";
+      return { w: compact ? 176 : 256, h: compact ? 76 : 116 };
+    };
+    // pick the side of the target the edge should approach from
+    const sides = list.map((c) => {
+      const s = byId.get(c.source);
+      const t = byId.get(c.target);
+      if (!s || !t) return "left" as TargetSide;
+      const ss = sizeOf(s);
+      const ts = sizeOf(t);
+      const dx = t.position.x + ts.w / 2 - (s.position.x + ss.w / 2);
+      const dy = t.position.y + ts.h / 2 - (s.position.y + ss.h / 2);
+      if (Math.abs(dx) >= Math.abs(dy) * 0.7) return (dx >= 0 ? "left" : "right") as TargetSide;
+      return (dy >= 0 ? "top" : "bottom") as TargetSide;
+    });
+    // spread multiple incoming edges on the same side across the three slots
+    const order = [1, 0, 2];
+    const used = new Map<string, number>();
+    return list.map((c, i) => {
+      const side = sides[i]!;
+      const key = `${c.target}|${side}`;
+      const n = used.get(key) ?? 0;
+      used.set(key, n + 1);
+      const slot = order[n % order.length]!;
+      const isSelected = selection.edges.includes(c.sys_id);
+      return {
         id: c.sys_id,
         source: c.source,
         sourceHandle: c.source_handle,
         target: c.target,
-        targetHandle: c.target_handle,
+        targetHandle: targetHandleId(side, slot),
         type: "smoothstep",
-        selected: selection.edges.includes(c.sys_id),
-        markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 },
-        style: { strokeWidth: selection.edges.includes(c.sys_id) ? 2.5 : 1.5 },
-      })),
-    [definition, selection.edges],
-  );
+        selected: isSelected,
+        selectable: true,
+        focusable: true,
+        deletable: true,
+        interactionWidth: 24,
+        markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 },
+        style: {
+          strokeWidth: isSelected ? 3 : 1.75,
+          ...(isSelected ? { stroke: "var(--primary)" } : {}),
+        },
+      } satisfies Edge;
+    });
+  }, [definition, selection.edges]);
+
 
   // ------------------------------------------------------------- graph edits
 
@@ -223,7 +265,8 @@ function Editor({ workflowId }: { workflowId: string }) {
             source: connection.source,
             source_handle: connection.sourceHandle ?? "default",
             target: connection.target,
-            target_handle: connection.targetHandle ?? "input",
+            // input side is chosen automatically when rendering; JSON stays canonical
+            target_handle: "input",
           },
         ],
       }));
@@ -382,7 +425,7 @@ function Editor({ workflowId }: { workflowId: string }) {
               zoom={zoom}
               canUndo={editor.canUndo}
               canRedo={editor.canRedo}
-              minimap={minimap}
+              
               snap={snap}
               issueCount={issues?.length ?? 0}
               dirty={editor.dirty}
@@ -393,7 +436,7 @@ function Editor({ workflowId }: { workflowId: string }) {
               onZoomIn={() => flow.zoomIn()}
               onZoomOut={() => flow.zoomOut()}
               onFit={() => flow.fitView({ padding: 0.2 })}
-              onToggleMinimap={() => setMinimap((m) => !m)}
+              
               onToggleSnap={() => setSnap((s) => !s)}
               onValidate={() => runValidation()}
             />
@@ -408,8 +451,22 @@ function Editor({ workflowId }: { workflowId: string }) {
                 onConnect={onConnect}
                 isValidConnection={isValidConnection}
                 onSelectionChange={onSelectionChange}
+                onEdgeClick={(event, edge) => {
+                  const additive = event.shiftKey || event.metaKey || event.ctrlKey;
+                  setSelection((s) => ({
+                    nodes: additive ? s.nodes : [],
+                    edges: additive
+                      ? s.edges.includes(edge.id)
+                        ? s.edges.filter((id) => id !== edge.id)
+                        : [...s.edges, edge.id]
+                      : [edge.id],
+                  }));
+                }}
                 onNodeDoubleClick={(_, n) => setConfiguringId(n.id)}
-                onPaneClick={() => setMenu(null)}
+                onPaneClick={() => {
+                  setMenu(null);
+                  setSelection({ nodes: [], edges: [] });
+                }}
                 onMove={(_, viewport) => setZoom(viewport.zoom)}
                 snapToGrid={snap}
                 snapGrid={[GRID, GRID]}
@@ -417,13 +474,16 @@ function Editor({ workflowId }: { workflowId: string }) {
                 minZoom={0.2}
                 maxZoom={2}
                 fitView
+                fitViewOptions={{ padding: 0.2, minZoom: 0.85, maxZoom: 1 }}
+                elementsSelectable
+                edgesFocusable
                 deleteKeyCode={null}
                 multiSelectionKeyCode={["Shift", "Meta", "Control"]}
                 proOptions={{ hideAttribution: true }}
               >
                 <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} />
                 <Controls showInteractive={false} />
-                {minimap && <MiniMap pannable zoomable nodeColor="#94a3b8" className="!bg-surface" />}
+
               </ReactFlow>
             </div>
 

@@ -5,7 +5,6 @@ interface Props {
   zoom: number;
   canUndo: boolean;
   canRedo: boolean;
-  minimap: boolean;
   snap: boolean;
   issueCount: number;
   dirty: boolean;
@@ -16,7 +15,7 @@ interface Props {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFit: () => void;
-  onToggleMinimap: () => void;
+  
   onToggleSnap: () => void;
   onValidate: () => void;
 }
@@ -34,7 +33,7 @@ export function WorkflowToolbar(p: Props) {
       <ToolButton icon="zoom-in" label="Zoom in" onClick={p.onZoomIn} />
       <ToolButton icon="maximize" label="Fit to screen" onClick={p.onFit} />
       <Divider />
-      <ToolButton icon="map" label="Minimap" onClick={p.onToggleMinimap} active={p.minimap} />
+      
       <ToolButton icon="grid-3x3" label="Snap to grid" onClick={p.onToggleSnap} active={p.snap} />
       <Divider />
       <button
