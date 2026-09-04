@@ -74,6 +74,7 @@ function Editor({ workflowId }: { workflowId: string }) {
   
   const [snap, setSnap] = useState(true);
   const [zoom, setZoom] = useState(1);
+  const [zoomLocked, setZoomLocked] = useState(false);
   const [issues, setIssues] = useState<WorkflowIssue[] | null>(null);
 
   const index = useMemo(() => buildComponentIndex(catalog), [catalog]);
