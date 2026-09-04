@@ -46,6 +46,23 @@ export function GlobalSearch() {
     void navigate(menuLinkProps(result.route));
   }
 
+  function openAll(q: string) {
+    if (!q) return;
+    setOpen(false);
+    setTerm("");
+    void navigate({ to: "/search", search: { q } });
+  }
+
+  /** Enter opens an exact record match, otherwise the full results page. */
+  function submit() {
+    const exact = results.findIndex(
+      (r) => r.display_value.trim().toLowerCase() === debounced.trim().toLowerCase(),
+    );
+    if (exact >= 0) openResult(exact);
+    else if (results.length && index > 0) openResult(index);
+    else openAll(debounced);
+  }
+
   return (
     <div ref={boxRef} className="relative hidden min-w-0 flex-1 md:block lg:max-w-md">
       <div className="relative">
@@ -80,7 +97,7 @@ export function GlobalSearch() {
               setIndex((i) => Math.max(i - 1, 0));
             } else if (e.key === "Enter") {
               e.preventDefault();
-              openResult(index);
+              submit();
             }
           }}
           className="h-7 w-full rounded-[3px] border border-nav-hover bg-nav-hover pl-7 pr-2 text-[13px] text-nav-foreground placeholder:text-nav-foreground/60 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring"
@@ -142,6 +159,14 @@ export function GlobalSearch() {
                   </li>
                 ))}
               </ul>
+              <button
+                type="button"
+                onClick={() => openAll(debounced)}
+                className="mt-1 flex w-full items-center justify-center gap-1.5 rounded-[3px] border-t border-border px-2 py-2 text-[12px] font-medium text-primary transition-colors hover:bg-muted"
+              >
+                <Icon name="list" className="size-3.5" />
+                View all {total} result{total === 1 ? "" : "s"}
+              </button>
             </>
           )}
         </div>
