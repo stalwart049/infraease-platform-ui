@@ -462,6 +462,77 @@ function seed() {
     purchased_on: isoDate(base, -((i % 400) + 30)),
     warranty_expires: isoDate(base, 300 - (i % 200)),
   })) as DataRecord[];
+
+  store["business_rule"] = buildBusinessRules(users, base);
+}
+
+const SAMPLE_SCRIPTS = [
+  `(function executeRule(current, previous) {
+
+    if (current.priority === "1") {
+        current.impact = "1";
+    }
+
+})(current, previous);`,
+  `(function executeRule(current, previous) {
+
+    // Escalate incidents that stay unassigned for over 4 hours
+    if (current.state === "new" && !current.assigned_to) {
+        current.escalated = true;
+        current.assignment_group = "service_desk";
+    }
+
+})(current, previous);`,
+  `(function executeRule(current, previous) {
+
+    if (current.stage === "fulfilment" && previous.stage !== "fulfilment") {
+        current.work_notes = "Request moved to fulfilment. Notify the assignee.";
+    }
+
+})(current, previous);`,
+  `(function executeRule(current, previous) {
+
+    // Retire assets whose warranty expired more than a year ago
+    var warrantyEnd = new Date(current.warranty_expires);
+    var cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 1);
+
+    if (warrantyEnd < cutoff && current.status !== "retired") {
+        current.status = "retired";
+    }
+
+})(current, previous);`,
+];
+
+function buildBusinessRules(users: DataRecord[], base: number): DataRecord[] {
+  const def = definitions["business_rule"]!;
+  const tables = def.fields.find((f) => f.name === "table_name")!.choices!;
+  const whens = def.fields.find((f) => f.name === "when")!.choices!;
+  const names = [
+    "Set impact from priority",
+    "Escalate unassigned incidents",
+    "Notify on fulfilment",
+    "Auto-retire expired assets",
+    "Default caller location",
+    "Sync department cost center",
+    "Close stale requests",
+    "Validate serial numbers",
+    "Assign to on-call group",
+    "Audit priority changes",
+    "Seed knowledge links",
+    "Normalize phone numbers",
+  ];
+  return names.map((name, i) => ({
+    sys_id: `brl${pad(i + 1, 5)}`,
+    name,
+    table_name: tables[i % tables.length]!.value,
+    when: whens[i % whens.length]!.value,
+    order: (i + 1) * 100,
+    active: i % 5 !== 4,
+    description: `Business rule "${name}" maintained by ${String(users[(i * 3) % users.length]!["name"])}.`,
+    script: SAMPLE_SCRIPTS[i % SAMPLE_SCRIPTS.length]!,
+    updated_at: isoDateTime(base, -i * 13),
+  })) as DataRecord[];
 }
 
 function seedGeneric(tableName: string) {
