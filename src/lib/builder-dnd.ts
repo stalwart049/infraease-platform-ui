@@ -1,43 +1,14 @@
 import type { JournalType } from "@/services/types";
 
-export const DND_MIME = "application/x-infraease-builder";
+/** Data carried by dnd-kit draggables/droppables inside the Form Builder. */
+export type DragData =
+  | { kind: "field"; name: string; label: string }
+  | { kind: "journal"; journalType: JournalType; label: string }
+  | { kind: "item"; itemId: string; sectionId: string; index: number; label: string }
+  | { kind: "section"; sectionId: string; index: number; label: string }
+  | { kind: "section-body"; sectionId: string; count: number };
 
-export type DragPayload =
-  | { kind: "field"; name: string }
-  | { kind: "journal"; journalType: JournalType }
-  | { kind: "item"; itemId: string }
-  | { kind: "section"; sectionId: string };
-
-/** Mirror of the payload, readable during dragover (where dataTransfer is locked). */
-let current: DragPayload | null = null;
-
-export function startDrag(e: React.DragEvent, payload: DragPayload) {
-  current = payload;
-  e.dataTransfer.effectAllowed = "move";
-  e.dataTransfer.setData(DND_MIME, JSON.stringify(payload));
-  e.dataTransfer.setData("text/plain", JSON.stringify(payload));
-}
-
-export function endDrag() {
-  current = null;
-}
-
-export function peekDrag(): DragPayload | null {
-  return current;
-}
-
-export function readDrag(e: React.DragEvent): DragPayload | null {
-  const raw = e.dataTransfer.getData(DND_MIME) || e.dataTransfer.getData("text/plain");
-  if (!raw) return current;
-  try {
-    return JSON.parse(raw) as DragPayload;
-  } catch {
-    return current;
-  }
-}
-
-/** True when the pointer sits in the top half of the target element. */
-export function isBefore(e: React.DragEvent, el: HTMLElement): boolean {
-  const rect = el.getBoundingClientRect();
-  return e.clientY < rect.top + rect.height / 2;
-}
+export const paletteFieldId = (name: string) => `pal-field:${name}`;
+export const paletteJournalId = (t: string) => `pal-journal:${t}`;
+export const sectionId = (id: string) => `sec:${id}`;
+export const sectionBodyId = (id: string) => `sec-body:${id}`;

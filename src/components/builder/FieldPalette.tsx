@@ -1,10 +1,46 @@
 import { useState } from "react";
+import { useDraggable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/common/Icon";
-import { startDrag, endDrag } from "@/lib/builder-dnd";
+import { paletteFieldId, paletteJournalId, type DragData } from "@/lib/builder-dnd";
 import type { FormViewFieldRef, JournalComponentMeta } from "@/services/types";
 
 type Tab = "fields" | "journal";
+
+function PaletteCard({
+  id,
+  data,
+  title,
+  subtitle,
+  dashed,
+}: {
+  id: string;
+  data: DragData;
+  title: string;
+  subtitle?: string;
+  dashed?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id, data });
+  return (
+    <div
+      ref={setNodeRef}
+      {...attributes}
+      {...listeners}
+      className={cn(
+        "flex cursor-grab items-center gap-2 rounded-[4px] border bg-surface-sunken px-2.5 py-2 transition-colors active:cursor-grabbing",
+        dashed ? "border-dashed border-border" : "border-border",
+        "hover:border-primary/60 hover:bg-muted",
+        isDragging && "opacity-40",
+      )}
+    >
+      <Icon name="grip-vertical" className="size-3.5 shrink-0 text-muted-foreground" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[13px] text-foreground">{title}</p>
+        {subtitle && <p className="truncate text-[11px] text-muted-foreground">{subtitle}</p>}
+      </div>
+    </div>
+  );
+}
 
 export function FieldPalette({
   tableLabel,
@@ -73,18 +109,14 @@ export function FieldPalette({
       <div className="min-h-0 flex-1 overflow-y-auto p-2">
         {tab === "fields" ? (
           visibleFields.length ? (
-            <ul className="divide-y divide-border overflow-hidden rounded-[3px] border border-border">
+            <ul className="space-y-1.5">
               {visibleFields.map((f) => (
                 <li key={f.sys_id}>
-                  <div
-                    draggable
-                    onDragStart={(e) => startDrag(e, { kind: "field", name: f.name })}
-                    onDragEnd={endDrag}
-                    title={f.name}
-                    className="cursor-grab bg-surface px-3 py-2 text-[13px] text-foreground hover:bg-muted active:cursor-grabbing"
-                  >
-                    {f.display_value}
-                  </div>
+                  <PaletteCard
+                    id={paletteFieldId(f.name)}
+                    data={{ kind: "field", name: f.name, label: f.display_value }}
+                    title={f.display_value}
+                  />
                 </li>
               ))}
             </ul>
@@ -97,15 +129,13 @@ export function FieldPalette({
           <ul className="space-y-1.5">
             {visibleJournals.map((j) => (
               <li key={j.journalType}>
-                <div
-                  draggable
-                  onDragStart={(e) => startDrag(e, { kind: "journal", journalType: j.journalType })}
-                  onDragEnd={endDrag}
-                  className="cursor-grab rounded-[3px] border border-dashed border-border bg-surface-sunken px-3 py-2 hover:border-primary/50 active:cursor-grabbing"
-                >
-                  <p className="text-[13px] font-medium text-foreground">{j.label}</p>
-                  <p className="text-[11px] text-muted-foreground">{j.description}</p>
-                </div>
+                <PaletteCard
+                  dashed
+                  id={paletteJournalId(j.journalType)}
+                  data={{ kind: "journal", journalType: j.journalType, label: j.label }}
+                  title={j.label}
+                  subtitle={j.description}
+                />
               </li>
             ))}
           </ul>
