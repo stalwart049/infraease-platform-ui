@@ -481,10 +481,15 @@ function Editor({ workflowId }: { workflowId: string }) {
                 edgesFocusable
                 deleteKeyCode={null}
                 multiSelectionKeyCode={["Shift", "Meta", "Control"]}
+                zoomOnScroll={!zoomLocked}
+                zoomOnPinch={!zoomLocked}
+                zoomOnDoubleClick={!zoomLocked}
+                zoomActivationKeyCode={zoomLocked ? null : undefined}
+                preventScrolling={!zoomLocked}
                 proOptions={{ hideAttribution: true }}
               >
                 <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} />
-                <Controls showInteractive={false} />
+                <Controls showInteractive={false} showZoom={!zoomLocked} showFitView={!zoomLocked} />
 
               </ReactFlow>
             </div>
