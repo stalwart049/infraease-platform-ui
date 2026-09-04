@@ -541,11 +541,8 @@ export const MENUS: MenuNode[] = [
     id: "favorites",
     label: "Favorites",
     icon: "star",
-    children: [
-      { id: "fav_inc", label: "My Incidents", icon: "alert-circle", route: "/list/incident" },
-      { id: "fav_req", label: "Open Requests", icon: "clipboard-list", route: "/list/request" },
-      { id: "fav_users", label: "People Directory", icon: "users", route: "/list/sys_user" },
-    ],
+    empty_message: "No favorites added.",
+    children: [],
   },
   {
     id: "applications",
@@ -675,7 +672,7 @@ export function addActivity(
 
 // ------------------------------------------------------------ favorites store
 
-const FAVORITE_SEED = ["incidents", "assets", "kb_articles"];
+const FAVORITE_SEED = ["incidents", "requests", "assets"];
 let favoriteIds: string[] | null = null;
 
 export function getFavoriteIds(): string[] {
@@ -689,6 +686,18 @@ export function setFavorite(id: string, on: boolean): string[] {
   if (on && idx < 0) list.push(id);
   if (!on && idx >= 0) list.splice(idx, 1);
   return [...list];
+}
+
+/**
+ * The menu the API serves: the favorites section is materialised from the
+ * user's starred items, everything else is the static application menu.
+ */
+export function buildMenus(): MenuNode[] {
+  return MENUS.map((menu) =>
+    menu.id === "favorites"
+      ? { ...menu, children: getFavoriteIds().map((id) => findMenuNode(id)).filter((n): n is MenuNode => n !== null) }
+      : menu,
+  );
 }
 
 /** Finds a menu node anywhere in the API-provided tree. */

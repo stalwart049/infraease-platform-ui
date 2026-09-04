@@ -74,7 +74,11 @@ export function MenuDropdown({
           {nodes.length ? (
             <MenuTree nodes={nodes} onNavigate={() => onOpenChange(false)} />
           ) : (
-            <p className="px-2 py-6 text-center text-[13px] text-muted-foreground">No menu items match "{term}".</p>
+            <p className="px-2 py-6 text-center text-[13px] text-muted-foreground">
+              {term
+                ? `No menu items match "${term}".`
+                : (menu.empty_message ?? "No menu items available.")}
+            </p>
           )}
         </div>
       </PopoverContent>
