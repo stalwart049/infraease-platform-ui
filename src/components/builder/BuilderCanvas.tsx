@@ -1,23 +1,35 @@
-import { useState } from "react";
-import { useDroppable } from "@dnd-kit/core";
-import { SortableContext, useSortable, rectSortingStrategy, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { Fragment, useState } from "react";
+import { useDraggable, useDroppable } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/common/Icon";
 import { ActionButton } from "@/components/common/ActionButton";
-import { sectionBodyId, sectionId as sectionDndId } from "@/lib/builder-dnd";
+import {
+  dragWidth,
+  itemSlotId,
+  sectionBodyId,
+  sectionId as sectionDndId,
+  type DragData,
+  type DropTarget,
+} from "@/lib/builder-dnd";
 import { itemLabel } from "@/lib/form-builder-utils";
-import type { FormViewConfig, FormViewItem, FormViewSection } from "@/services/types";
+import type { FieldWidth, FormViewConfig, FormViewItem, FormViewSection } from "@/services/types";
 
 interface CanvasProps {
   config: FormViewConfig;
   selectedId: string | null;
-  activeId: string | null;
+  activeDrag: DragData | null;
+  dropTarget: DropTarget | null;
   onSelect: (id: string | null) => void;
   onRemove: (itemId: string) => void;
   onRename: (sectionId: string, name: string) => void;
   onDeleteSection: (sectionId: string) => void;
   onAddSection: () => void;
+}
+
+function itemWidth(item: FormViewItem): FieldWidth {
+  return item.type === "journal" ? "full" : (item.properties.width ?? "half");
 }
 
 export function BuilderCanvas(props: CanvasProps) {
@@ -64,7 +76,8 @@ function SectionCard({
   section,
   index,
   selectedId,
-  activeId,
+  activeDrag,
+  dropTarget,
   onSelect,
   onRemove,
   onRename,
@@ -79,9 +92,15 @@ function SectionCard({
     data: { kind: "section", sectionId: section.sys_id, index, label: section.name },
   });
 
+  // the item being dragged is lifted out of the list, a placeholder marks the drop position
+  const draggedId = activeDrag?.kind === "item" ? activeDrag.itemId : null;
+  const list = section.fields.filter((f) => f.sys_id !== draggedId);
+  const placeholderAt = dropTarget?.sectionId === section.sys_id ? dropTarget.index : null;
+  const placeholderWidth = dragWidth(activeDrag);
+
   const body = useDroppable({
     id: sectionBodyId(section.sys_id),
-    data: { kind: "section-body", sectionId: section.sys_id, count: section.fields.length },
+    data: { kind: "section-body", sectionId: section.sys_id, count: list.length },
   });
 
   function commitRename() {
@@ -172,16 +191,13 @@ function SectionCard({
 
       <div
         ref={body.setNodeRef}
-        className={cn(
-          "min-h-20 p-3 transition-colors",
-          body.isOver && activeId && "bg-primary/5",
-        )}
+        className={cn("min-h-20 p-3 transition-colors", placeholderAt !== null && "bg-primary/[0.03]")}
       >
-        <SortableContext items={section.fields.map((f) => f.sys_id)} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 gap-x-4 gap-y-2 sm:grid-cols-2">
-            {section.fields.map((item, i) => (
+        <div className="grid grid-cols-1 items-start gap-x-4 gap-y-2 sm:grid-cols-2">
+          {list.map((item, i) => (
+            <Fragment key={item.sys_id}>
+              {placeholderAt === i && <Placeholder width={placeholderWidth} />}
               <CanvasItem
-                key={item.sys_id}
                 item={item}
                 sectionId={section.sys_id}
                 index={i}
@@ -189,23 +205,33 @@ function SectionCard({
                 onSelect={() => onSelect(item.sys_id)}
                 onRemove={() => onRemove(item.sys_id)}
               />
-            ))}
-          </div>
-        </SortableContext>
+            </Fragment>
+          ))}
+          {placeholderAt === list.length && <Placeholder width={placeholderWidth} />}
+        </div>
 
-        {!section.fields.length && (
-          <div
-            className={cn(
-              "rounded-[3px] border border-dashed px-4 py-6 text-center text-[12px]",
-              body.isOver && activeId ? "border-primary text-primary" : "border-border text-muted-foreground",
-            )}
-          >
+        {!list.length && placeholderAt === null && (
+          <div className="rounded-[3px] border border-dashed border-border px-4 py-6 text-center text-[12px] text-muted-foreground">
             Drag fields or journal components here
           </div>
         )}
       </div>
       <p className="sr-only">Section {section.order} of the form view {config.name}</p>
     </section>
+  );
+}
+
+function Placeholder({ width }: { width: FieldWidth }) {
+  return (
+    <div
+      aria-hidden="true"
+      className={cn(
+        "flex h-[58px] items-center justify-center rounded-[3px] border-2 border-dashed border-primary bg-primary/10 text-[11px] font-medium uppercase tracking-[0.08em] text-primary",
+        width === "full" && "sm:col-span-2",
+      )}
+    >
+      Drop here
+    </div>
   );
 }
 
@@ -251,15 +277,25 @@ function CanvasItem({
   onRemove: () => void;
 }) {
   const journal = item.type === "journal";
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+  const width = itemWidth(item);
+
+  const { attributes, listeners, setNodeRef } = useDraggable({
     id: item.sys_id,
-    data: { kind: "item", itemId: item.sys_id, sectionId, index, label: itemLabel(item) },
+    data: { kind: "item", itemId: item.sys_id, sectionId, index, label: itemLabel(item), width },
+  });
+
+  // droppable slot used to compute the live insertion index
+  const slot = useDroppable({
+    id: itemSlotId(item.sys_id),
+    data: { kind: "item-slot", sectionId, index, width },
   });
 
   return (
     <div
-      ref={setNodeRef}
-      style={{ transform: CSS.Transform.toString(transform), transition }}
+      ref={(node) => {
+        setNodeRef(node);
+        slot.setNodeRef(node);
+      }}
       onClick={onSelect}
       role="button"
       tabIndex={0}
@@ -270,10 +306,10 @@ function CanvasItem({
         }
       }}
       className={cn(
-        "relative rounded-[3px] border px-2.5 py-2 transition-colors",
-        journal ? "border-dashed bg-surface-sunken sm:col-span-2" : "bg-surface",
+        "relative rounded-[3px] border px-2.5 py-2",
+        journal ? "border-dashed bg-surface-sunken" : "bg-surface",
+        width === "full" && "sm:col-span-2",
         selected ? "border-primary ring-1 ring-primary" : "border-border hover:border-primary/40",
-        isDragging && "opacity-40",
       )}
     >
       <div className="flex items-center gap-2">
@@ -290,6 +326,11 @@ function CanvasItem({
         {journal && (
           <span className="rounded-[2px] border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
             Journal
+          </span>
+        )}
+        {!journal && (
+          <span className="rounded-[2px] border border-border px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-muted-foreground">
+            {width}
           </span>
         )}
         {item.properties.visible === false && <Icon name="eye-off" className="size-3.5 text-muted-foreground" />}

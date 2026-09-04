@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   DndContext,
   DragOverlay,
@@ -6,8 +6,10 @@ import {
   KeyboardSensor,
   useSensor,
   useSensors,
-  closestCenter,
+  pointerWithin,
+  type CollisionDetection,
   type DragEndEvent,
+  type DragMoveEvent,
   type DragStartEvent,
 } from "@dnd-kit/core";
 import { restrictToWindowEdges } from "@dnd-kit/modifiers";
@@ -20,7 +22,18 @@ import { ActionButton } from "@/components/common/ActionButton";
 import { StateBlock } from "@/components/form/FormView";
 import { scriptsForItem } from "@/lib/form-builder-utils";
 import { Icon } from "@/components/common/Icon";
-import type { DragData } from "@/lib/builder-dnd";
+import { sameTarget, type DragData, type DropTarget } from "@/lib/builder-dnd";
+
+const RANK: Record<string, number> = { "item-slot": 3, "section-body": 2, section: 1 };
+
+/** Pointer based detection that always prefers the most specific drop zone. */
+const collide: CollisionDetection = (args) => {
+  const hits = pointerWithin(args);
+  if (hits.length < 2) return hits;
+  const kindOf = (id: string | number) =>
+    (args.droppableContainers.find((c) => c.id === id)?.data.current as DragData | undefined)?.kind ?? "";
+  return [...hits].sort((a, z) => (RANK[kindOf(z.id)] ?? 0) - (RANK[kindOf(a.id)] ?? 0));
+};
 
 export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?: string }) {
   const navigate = useNavigate();
@@ -38,46 +51,86 @@ export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?:
   }, [b.dirty]);
 
   const [active, setActive] = useState<DragData | null>(null);
+  const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
+  const dropRef = useRef<DropTarget | null>(null);
+  // the dragged card unmounts while a placeholder stands in for it, so keep its payload here
+  const activeRef = useRef<DragData | null>(null);
+  const pointer = useRef({ x: 0, y: 0 });
+
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor),
   );
 
+  // the pointer position decides the insertion index, so track it while dragging
+  useEffect(() => {
+    if (!active) return;
+    const onMove = (e: PointerEvent) => {
+      pointer.current = { x: e.clientX, y: e.clientY };
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [active]);
+
+  const setTarget = useCallback((next: DropTarget | null) => {
+    if (sameTarget(dropRef.current, next)) return;
+    dropRef.current = next;
+    setDropTarget(next);
+  }, []);
+
+  const reset = useCallback(() => {
+    activeRef.current = null;
+    setActive(null);
+    dropRef.current = null;
+    setDropTarget(null);
+  }, []);
+
   function onDragStart(e: DragStartEvent) {
-    setActive((e.active.data.current as DragData) ?? null);
+    const data = (e.active.data.current as DragData) ?? null;
+    activeRef.current = data;
+    setActive(data);
+    const rect = e.active.rect.current.initial;
+    if (rect) pointer.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+
+  /** Resolves the live insertion point from the cursor, never by appending blindly. */
+  function onDragMove(e: DragMoveEvent) {
+    const a = activeRef.current;
+    if (!a || a.kind === "section") return;
+    const o = e.over?.data.current as DragData | undefined;
+    if (!o) return setTarget(null);
+
+    if (o.kind === "item-slot") {
+      const rect = e.over!.rect;
+      const twoCol = typeof window !== "undefined" && window.innerWidth >= 640;
+      const after =
+        o.width === "half" && twoCol
+          ? pointer.current.x > rect.left + rect.width / 2
+          : pointer.current.y > rect.top + rect.height / 2;
+      return setTarget({ sectionId: o.sectionId, index: o.index + (after ? 1 : 0) });
+    }
+    if (o.kind === "section-body") return setTarget({ sectionId: o.sectionId, index: o.count });
+    if (o.kind === "section") return setTarget({ sectionId: o.sectionId, index: Number.MAX_SAFE_INTEGER });
+    setTarget(null);
   }
 
   function onDragEnd(e: DragEndEvent) {
-    setActive(null);
-    const a = e.active.data.current as DragData | undefined;
-    const o = e.over?.data.current as DragData | undefined;
-    if (!a || !o) return;
+    const a = activeRef.current;
+    const target = dropRef.current;
+    reset();
+    if (!a) return;
 
     if (a.kind === "section") {
-      if (o.kind !== "section" || o.sectionId === a.sectionId) return;
+      const o = e.over?.data.current as DragData | undefined;
+      if (!o || o.kind !== "section" || o.sectionId === a.sectionId) return;
       b.moveSection(a.sectionId, a.index < o.index ? o.index + 1 : o.index);
       return;
     }
 
-    let targetSection: string;
-    let index: number;
-    if (o.kind === "item") {
-      targetSection = o.sectionId;
-      index = o.index;
-      if (a.kind === "item" && a.sectionId === o.sectionId && a.index < o.index) index = o.index + 1;
-    } else if (o.kind === "section-body") {
-      targetSection = o.sectionId;
-      index = o.count;
-    } else if (o.kind === "section") {
-      targetSection = o.sectionId;
-      index = Number.MAX_SAFE_INTEGER;
-    } else {
-      return;
-    }
-
-    if (a.kind === "field") b.addField(a.name, targetSection, index);
-    else if (a.kind === "journal") b.addJournal(a.journalType, targetSection, index);
-    else if (a.kind === "item") b.moveItem(a.itemId, targetSection, index);
+    if (!target) return;
+    if (a.kind === "field") b.addField(a.name, target.sectionId, target.index);
+    else if (a.kind === "journal") b.addJournal(a.journalType, target.sectionId, target.index);
+    else if (a.kind === "item") b.moveItemTo(a.itemId, target.sectionId, target.index);
   }
 
   if (b.error) {
@@ -123,10 +176,11 @@ export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?:
       ) : (
         <DndContext
           sensors={sensors}
-          collisionDetection={closestCenter}
+          collisionDetection={collide}
           modifiers={[restrictToWindowEdges]}
           onDragStart={onDragStart}
-          onDragCancel={() => setActive(null)}
+          onDragMove={onDragMove}
+          onDragCancel={reset}
           onDragEnd={onDragEnd}
         >
         <div className="mx-auto grid max-w-[1600px] grid-cols-1 gap-4 px-0 py-4 sm:px-6 lg:grid-cols-[260px_minmax(0,1fr)_300px]">
@@ -143,7 +197,8 @@ export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?:
             <BuilderCanvas
               config={b.config}
               selectedId={b.selectedId}
-              activeId={active ? "dragging" : null}
+              activeDrag={active}
+              dropTarget={dropTarget}
               onSelect={b.setSelectedId}
               onRemove={b.removeItem}
               onRename={b.renameSection}
@@ -159,6 +214,7 @@ export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?:
               scripts={scriptsForItem(b.selected, b.data.clientScripts)}
               onProperty={(patch) => b.selectedId && b.setItemProperty(b.selectedId, patch)}
               onOrder={(order) => b.selectedId && b.setItemOrder(b.selectedId, order)}
+              onWidth={(w) => b.selectedId && b.setItemWidth(b.selectedId, w)}
               onRemove={() => b.selectedId && b.removeItem(b.selectedId)}
             />
           </div>

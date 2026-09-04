@@ -267,13 +267,17 @@ export interface FormViewFieldRef {
   type: string;
 }
 
+/** layout width of a field on the form canvas */
+export type FieldWidth = "half" | "full";
+
 export interface FormViewFieldItem {
   sys_id: string;
   type: "field";
   field: FormViewFieldRef;
   order: number;
-  properties: { mandatory: boolean; readonly: boolean; visible: boolean };
+  properties: { width: FieldWidth; mandatory: boolean; readonly: boolean; visible: boolean };
 }
+
 
 export interface FormViewJournalItem {
   sys_id: string;

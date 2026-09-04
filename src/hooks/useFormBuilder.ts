@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { formBuilderService } from "@/services/formBuilderService";
-import type { FormBuilderData, FormViewConfig, FormViewItem, JournalType } from "@/services/types";
+import type { FieldWidth, FormBuilderData, FormViewConfig, FormViewItem, JournalType } from "@/services/types";
 import {
   findItem,
   makeFieldItem,
@@ -119,6 +119,24 @@ export function useFormBuilder(tableName: string, viewId?: string) {
     [data, config, insertItem],
   );
 
+  /** Moves an existing item to an index in the destination list *without* the item. */
+  const moveItemTo = useCallback(
+    (itemId: string, toSectionId: string, index: number) => {
+      update((c) => {
+        const from = c.sections.find((s) => s.fields.some((f) => f.sys_id === itemId));
+        const to = c.sections.find((s) => s.sys_id === toSectionId);
+        if (!from || !to) return c;
+        const currentIndex = from.fields.findIndex((f) => f.sys_id === itemId);
+        const [item] = from.fields.splice(currentIndex, 1);
+        if (!item) return c;
+        to.fields.splice(Math.max(0, Math.min(index, to.fields.length)), 0, item);
+        return c;
+      });
+      setSelectedId(itemId);
+    },
+    [update],
+  );
+
   /** Moves an existing item — never duplicates it. */
   const moveItem = useCallback(
     (itemId: string, toSectionId: string, index: number) => {
@@ -156,6 +174,17 @@ export function useFormBuilder(tableName: string, viewId?: string) {
       update((c) => {
         const found = findItem(c, itemId);
         if (found) Object.assign(found.item.properties, patch);
+        return c;
+      });
+    },
+    [update],
+  );
+
+  const setItemWidth = useCallback(
+    (itemId: string, width: FieldWidth) => {
+      update((c) => {
+        const found = findItem(c, itemId);
+        if (found && found.item.type === "field") found.item.properties.width = width;
         return c;
       });
     },
@@ -256,6 +285,8 @@ export function useFormBuilder(tableName: string, viewId?: string) {
     addField,
     addJournal,
     moveItem,
+    moveItemTo,
+    setItemWidth,
     removeItem,
     setItemProperty,
     setItemOrder,
