@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { Icon } from "@/components/common/Icon";
 import { ReferenceField } from "./ReferenceField";
+import { ScriptField } from "./ScriptField";
 import type { FieldMeta, RecordValue, ReferenceValue } from "@/services/types";
 import { cn } from "@/lib/utils";
 
@@ -31,7 +32,7 @@ export function FormField({ field, value, error, onChange, onBlur }: Props) {
     onBlur,
   };
 
-  const isWide = field.type === "textarea";
+  const isWide = field.type === "textarea" || field.type === "script";
 
   return (
     <div className={cn("min-w-0", isWide && "md:col-span-2")}>
@@ -64,6 +65,16 @@ export function FormField({ field, value, error, onChange, onBlur }: Props) {
 
   function renderControl() {
     switch (field.type) {
+      case "script":
+        return (
+          <ScriptField
+            id={fieldId}
+            value={(value as string) ?? ""}
+            onChange={(v) => onChange(v)}
+            disabled={readOnly}
+            invalid={invalid}
+          />
+        );
       case "textarea":
         return (
           <textarea

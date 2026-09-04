@@ -223,6 +223,49 @@ const definitions: Record<string, TableDefinition> = {
       { name: "warranty_expires", label: "Warranty Expires", type: "date", icon: "calendar" },
     ],
   },
+  business_rule: {
+    table: {
+      name: "business_rule",
+      label: "Business Rule",
+      plural_label: "Business Rules",
+      display_field: "name",
+      id_field: "sys_id",
+    },
+    seedCount: 12,
+    listColumns: ["name", "table_name", "when", "order", "active", "updated_at"],
+    sections: [
+      { id: "details", label: "Details", fields: ["name", "table_name", "when", "order", "active"] },
+      { id: "script", label: "Script", fields: ["description", "script"] },
+    ],
+    fields: [
+      { name: "name", label: "Name", type: "text", mandatory: true, max_length: 80, icon: "file-code", width: 280 },
+      {
+        name: "table_name",
+        label: "Table",
+        type: "select",
+        mandatory: true,
+        choices: choice("Incident", "Request", "Asset", "User", "Department"),
+        width: 150,
+      },
+      {
+        name: "when",
+        label: "When",
+        type: "select",
+        choices: choice("Before", "After", "Async", "Display"),
+        width: 120,
+      },
+      { name: "order", label: "Order", type: "number", min: 0, max: 10000, width: 100 },
+      { name: "active", label: "Active", type: "boolean", width: 90 },
+      { name: "description", label: "Description", type: "textarea", icon: "file-text" },
+      {
+        name: "script",
+        label: "Script",
+        type: "script",
+        hint: "Server-side script. It runs on the platform, never in the browser.",
+      },
+      { name: "updated_at", label: "Updated", type: "datetime", readonly: true, icon: "clock", width: 170 },
+    ],
+  },
 };
 
 // Generic fallback so ANY table name renders something sensible.
@@ -419,6 +462,77 @@ function seed() {
     purchased_on: isoDate(base, -((i % 400) + 30)),
     warranty_expires: isoDate(base, 300 - (i % 200)),
   })) as DataRecord[];
+
+  store["business_rule"] = buildBusinessRules(users, base);
+}
+
+const SAMPLE_SCRIPTS = [
+  `(function executeRule(current, previous) {
+
+    if (current.priority === "1") {
+        current.impact = "1";
+    }
+
+})(current, previous);`,
+  `(function executeRule(current, previous) {
+
+    // Escalate incidents that stay unassigned for over 4 hours
+    if (current.state === "new" && !current.assigned_to) {
+        current.escalated = true;
+        current.assignment_group = "service_desk";
+    }
+
+})(current, previous);`,
+  `(function executeRule(current, previous) {
+
+    if (current.stage === "fulfilment" && previous.stage !== "fulfilment") {
+        current.work_notes = "Request moved to fulfilment. Notify the assignee.";
+    }
+
+})(current, previous);`,
+  `(function executeRule(current, previous) {
+
+    // Retire assets whose warranty expired more than a year ago
+    var warrantyEnd = new Date(current.warranty_expires);
+    var cutoff = new Date();
+    cutoff.setFullYear(cutoff.getFullYear() - 1);
+
+    if (warrantyEnd < cutoff && current.status !== "retired") {
+        current.status = "retired";
+    }
+
+})(current, previous);`,
+];
+
+function buildBusinessRules(users: DataRecord[], base: number): DataRecord[] {
+  const def = definitions["business_rule"]!;
+  const tables = def.fields.find((f) => f.name === "table_name")!.choices!;
+  const whens = def.fields.find((f) => f.name === "when")!.choices!;
+  const names = [
+    "Set impact from priority",
+    "Escalate unassigned incidents",
+    "Notify on fulfilment",
+    "Auto-retire expired assets",
+    "Default caller location",
+    "Sync department cost center",
+    "Close stale requests",
+    "Validate serial numbers",
+    "Assign to on-call group",
+    "Audit priority changes",
+    "Seed knowledge links",
+    "Normalize phone numbers",
+  ];
+  return names.map((name, i) => ({
+    sys_id: `brl${pad(i + 1, 5)}`,
+    name,
+    table_name: tables[i % tables.length]!.value,
+    when: whens[i % whens.length]!.value,
+    order: (i + 1) * 100,
+    active: i % 5 !== 4,
+    description: `Business rule "${name}" maintained by ${String(users[(i * 3) % users.length]!["name"])}.`,
+    script: SAMPLE_SCRIPTS[i % SAMPLE_SCRIPTS.length]!,
+    updated_at: isoDateTime(base, -i * 13),
+  })) as DataRecord[];
 }
 
 function seedGeneric(tableName: string) {
@@ -531,6 +645,7 @@ export const MENUS: MenuNode[] = [
         label: "Platform",
         icon: "settings",
         children: [
+          { id: "business_rules", label: "Business Rules", icon: "file-code", route: "/list/business_rule" },
           { id: "tables", label: "Tables", icon: "table", route: "/list/sys_db_table" },
           { id: "custom_table", label: "Custom Table", icon: "layers", route: "/list/custom_table" },
         ],
@@ -605,6 +720,7 @@ export const SEARCHABLE_TABLES: { table: string; icon: string; subtitle_field?: 
   { table: "asset", icon: "laptop", subtitle_field: "model" },
   { table: "sys_user", icon: "user", subtitle_field: "title" },
   { table: "department", icon: "building", subtitle_field: "cost_center" },
+  { table: "business_rule", icon: "file-code", subtitle_field: "table_name" },
 ];
 
 export const ACTIVITY_TYPES: ActivityTypeMeta[] = [
