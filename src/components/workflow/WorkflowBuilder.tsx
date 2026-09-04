@@ -7,7 +7,6 @@ import {
   MiniMap,
   ReactFlow,
   ReactFlowProvider,
-  addEdge,
   useReactFlow,
   type Connection,
   type Edge,
@@ -228,8 +227,6 @@ function Editor({ workflowId }: { workflowId: string }) {
           },
         ],
       }));
-      // keeps React Flow's internal edge cache in sync with our definition
-      addEdge(connection, []);
     },
     [isValidConnection, update],
   );
