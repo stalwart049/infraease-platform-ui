@@ -6,6 +6,7 @@ import { FormHeader } from "./FormHeader";
 import { FormSectionTabs } from "./FormSectionTabs";
 import { FormField } from "./FormField";
 import { RelatedLinks } from "./RelatedLinks";
+import { ActivityStream } from "./ActivityStream";
 import { ActionButton } from "@/components/common/ActionButton";
 import { Icon } from "@/components/common/Icon";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
