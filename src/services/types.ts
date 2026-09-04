@@ -337,3 +337,141 @@ export interface FormBuilderData {
   clientScripts: Record<string, ClientScriptRef[]>;
   views: { sys_id: string; name: string }[];
 }
+
+// --------------------------------------------------------------- workflows
+
+export type WorkflowNodeType = "start" | "trigger" | "condition" | "action" | "flow" | "end";
+
+export interface WorkflowPosition {
+  x: number;
+  y: number;
+}
+
+export interface WorkflowConditionRow {
+  id: string;
+  field: string;
+  operator: FilterOperator;
+  value: string;
+}
+
+export interface WorkflowFieldAssignment {
+  id: string;
+  field: string;
+  value: string;
+}
+
+export interface WorkflowSwitchCase {
+  id: string;
+  label: string;
+  value: string;
+}
+
+/** Free-form, but every key the builder writes is declared here. */
+export interface WorkflowConfiguration {
+  table?: string;
+  record?: string;
+  event?: string;
+  schedule?: string;
+  logic?: "AND" | "OR";
+  conditions?: WorkflowConditionRow[];
+  fields?: WorkflowFieldAssignment[];
+  cases?: WorkflowSwitchCase[];
+  /** field a Switch node evaluates */
+  field?: string;
+  branches?: number;
+  join_mode?: "all" | "any";
+  approver?: string;
+  approval_type?: "user" | "group" | "manager";
+  duration?: number;
+  unit?: "minutes" | "hours" | "days";
+  message?: string;
+  subject?: string;
+  body?: string;
+  recipient?: string;
+  script?: string;
+  method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  endpoint?: string;
+  payload?: string;
+  subflow?: string;
+  reason?: string;
+}
+
+export interface WorkflowNode {
+  sys_id: string;
+  type: WorkflowNodeType;
+  subtype: string;
+  label: string;
+  description?: string;
+  position: WorkflowPosition;
+  disabled?: boolean;
+  configuration: WorkflowConfiguration;
+}
+
+export interface WorkflowConnection {
+  sys_id: string;
+  source: string;
+  source_handle: string;
+  target: string;
+  target_handle: string;
+}
+
+export interface WorkflowDefinition {
+  sys_id: string;
+  name: string;
+  description?: string;
+  table?: string;
+  active: boolean;
+  nodes: WorkflowNode[];
+  connections: WorkflowConnection[];
+}
+
+export interface WorkflowSummary {
+  sys_id: string;
+  name: string;
+  table?: string;
+  active: boolean;
+  node_count: number;
+  updated_at: string;
+}
+
+export interface WorkflowHandleMeta {
+  id: string;
+  label: string;
+}
+
+export interface WorkflowComponentMeta {
+  subtype: string;
+  type: WorkflowNodeType;
+  label: string;
+  description: string;
+  icon: string;
+  /** static output handles; empty for terminal nodes */
+  outputs: WorkflowHandleMeta[];
+  /** node has no input handle */
+  no_input?: boolean;
+  /** outputs are derived from the configuration (switch cases, parallel branches) */
+  dynamic_outputs?: "cases" | "branches";
+  /** node accepts many incoming connections */
+  multi_input?: boolean;
+  /** required configuration keys */
+  required?: string[];
+}
+
+export interface WorkflowComponentCategory {
+  id: string;
+  label: string;
+  components: WorkflowComponentMeta[];
+}
+
+export interface WorkflowOperatorMeta {
+  value: FilterOperator;
+  label: string;
+}
+
+export interface WorkflowCatalog {
+  categories: WorkflowComponentCategory[];
+  tables: { name: string; label: string }[];
+  operators: WorkflowOperatorMeta[];
+  schedules: { value: string; label: string }[];
+  events: { value: string; label: string }[];
+}
