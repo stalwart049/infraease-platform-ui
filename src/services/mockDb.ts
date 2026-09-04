@@ -653,6 +653,7 @@ export const MENUS: MenuNode[] = [
         icon: "settings",
         children: [
           { id: "business_rules", label: "Business Rules", icon: "file-code", route: "/list/business_rule" },
+          { id: "form_builder", label: "Form Builder", icon: "layout-template", route: "/builder/incident" },
           { id: "tables", label: "Tables", icon: "table", route: "/list/sys_db_table" },
           { id: "custom_table", label: "Custom Table", icon: "layers", route: "/list/custom_table" },
         ],
