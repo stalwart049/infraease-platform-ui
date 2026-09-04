@@ -484,7 +484,6 @@ function Editor({ workflowId }: { workflowId: string }) {
                 zoomOnScroll={!zoomLocked}
                 zoomOnPinch={!zoomLocked}
                 zoomOnDoubleClick={!zoomLocked}
-                zoomActivationKeyCode={zoomLocked ? null : undefined}
                 preventScrolling={!zoomLocked}
                 proOptions={{ hideAttribution: true }}
               >
