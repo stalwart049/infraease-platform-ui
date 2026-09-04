@@ -2,7 +2,8 @@ import { Link } from "@tanstack/react-router";
 import { menuLinkProps } from "@/components/layout/MenuTree";
 import { Icon } from "@/components/common/Icon";
 import { itemLabel } from "@/lib/form-builder-utils";
-import type { ClientScriptRef, FormViewItem, FormViewSection } from "@/services/types";
+import { cn } from "@/lib/utils";
+import type { ClientScriptRef, FieldWidth, FormViewItem, FormViewSection } from "@/services/types";
 
 export function FieldProperties({
   item,
@@ -10,6 +11,7 @@ export function FieldProperties({
   scripts,
   onProperty,
   onOrder,
+  onWidth,
   onRemove,
 }: {
   item: FormViewItem | null;
@@ -17,6 +19,7 @@ export function FieldProperties({
   scripts: ClientScriptRef[];
   onProperty: (patch: Partial<{ mandatory: boolean; readonly: boolean; visible: boolean }>) => void;
   onOrder: (order: number) => void;
+  onWidth: (width: FieldWidth) => void;
   onRemove: () => void;
 }) {
   return (
@@ -54,6 +57,42 @@ export function FieldProperties({
               className="h-8 w-24 rounded-[3px] border border-border bg-canvas px-2 text-[13px] outline-none focus-visible:border-primary"
             />
           </div>
+
+          {item.type === "field" && (
+            <div className="border-t border-border pt-3">
+              <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">Width</p>
+              <div
+                role="group"
+                aria-label="Field width"
+                className="inline-flex overflow-hidden rounded-[3px] border border-border"
+              >
+                {(
+                  [
+                    ["half", "Half Width"],
+                    ["full", "Full Width"],
+                  ] as [FieldWidth, string][]
+                ).map(([value, label]) => {
+                  const activeWidth = (item.properties.width ?? "half") === value;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      aria-pressed={activeWidth}
+                      onClick={() => onWidth(value)}
+                      className={cn(
+                        "px-3 py-1.5 text-[12px] font-medium transition-colors",
+                        activeWidth
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-surface text-muted-foreground hover:bg-muted hover:text-foreground",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           <div className="space-y-2 border-t border-border pt-3">
             {item.type === "field" && (

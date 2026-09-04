@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { cn } from "@/lib/utils";
 import { Icon } from "@/components/common/Icon";
+import { defaultWidth } from "@/lib/form-builder-utils";
 import { paletteFieldId, paletteJournalId, type DragData } from "@/lib/builder-dnd";
 import type { FormViewFieldRef, JournalComponentMeta } from "@/services/types";
 
@@ -114,7 +115,7 @@ export function FieldPalette({
                 <li key={f.sys_id}>
                   <PaletteCard
                     id={paletteFieldId(f.name)}
-                    data={{ kind: "field", name: f.name, label: f.display_value }}
+                    data={{ kind: "field", name: f.name, label: f.display_value, width: defaultWidth(f) }}
                     title={f.display_value}
                   />
                 </li>

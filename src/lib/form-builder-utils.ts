@@ -1,5 +1,6 @@
 import type {
   ClientScriptRef,
+  FieldWidth,
   FormViewConfig,
   FormViewFieldRef,
   FormViewItem,
@@ -19,7 +20,11 @@ export function normalize(config: FormViewConfig): FormViewConfig {
     sections: config.sections.map((s, si) => ({
       ...s,
       order: si + 1,
-      fields: s.fields.map((f, fi) => ({ ...f, order: fi + 1 })),
+      fields: s.fields.map((f, fi) =>
+        f.type === "field"
+          ? { ...f, order: fi + 1, properties: { ...f.properties, width: f.properties.width ?? defaultWidth(f.field) } }
+          : { ...f, order: fi + 1 },
+      ),
     })),
   };
 }
@@ -56,13 +61,18 @@ export function itemLabel(item: FormViewItem): string {
   return item.type === "field" ? item.field.display_value : item.label;
 }
 
+/** Long-form field types default to a full-width slot on the canvas. */
+export function defaultWidth(field: FormViewFieldRef): FieldWidth {
+  return field.type === "textarea" || field.type === "script" ? "full" : "half";
+}
+
 export function makeFieldItem(field: FormViewFieldRef): FormViewItem {
   return {
     sys_id: newId("sf"),
     type: "field",
     field,
     order: 1,
-    properties: { mandatory: false, readonly: false, visible: true },
+    properties: { width: defaultWidth(field), mandatory: false, readonly: false, visible: true },
   };
 }
 

@@ -934,10 +934,12 @@ function defaultFormView(tableName: string): FormViewConfig {
         field: fieldRef(tableName, f),
         order: fi + 1,
         properties: {
+          width: (f.type === "textarea" || f.type === "script" ? "full" : "half") as "half" | "full",
           mandatory: !!f.mandatory,
           readonly: !!f.readonly,
           visible: f.visible !== false,
         },
+
       })),
   }));
   sections.push({
