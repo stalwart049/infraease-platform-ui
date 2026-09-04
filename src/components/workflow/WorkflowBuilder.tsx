@@ -139,7 +139,7 @@ function Editor({ workflowId }: { workflowId: string }) {
         markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 },
         style: {
           strokeWidth: isSelected ? 3 : 1.75,
-          ...(isSelected ? { stroke: "hsl(var(--primary))" } : {}),
+          ...(isSelected ? { stroke: "var(--primary)" } : {}),
         },
       } satisfies Edge;
     });
