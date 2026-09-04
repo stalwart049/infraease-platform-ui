@@ -16,6 +16,13 @@ import type {
   ActivityEntry,
   ActivityType,
   ActivityTypeMeta,
+  ClientScriptRef,
+  ClientScriptType,
+  FormBuilderData,
+  FormViewConfig,
+  FormViewFieldRef,
+  FormViewSection,
+  JournalComponentMeta,
 } from "./types";
 
 interface TableDefinition {
@@ -828,15 +835,6 @@ export function findMenuNode(id: string, nodes: MenuNode[] = MENUS): MenuNode | 
 
 // ---------------------------------------------------------------- form views
 
-import type {
-  ClientScriptRef,
-  ClientScriptType,
-  FormBuilderData,
-  FormViewConfig,
-  FormViewFieldRef,
-  JournalComponentMeta,
-} from "./types";
-
 /** Deterministic pseudo sys_id so mock records look like real ones. */
 function sysId(seedText: string): string {
   let h1 = 0x811c9dc5;
@@ -922,7 +920,7 @@ function clientScriptsFor(tableName: string): Record<string, ClientScriptRef[]> 
 function defaultFormView(tableName: string): FormViewConfig {
   const def = getDefinition(tableName);
   const byName = new Map(def.fields.map((f) => [f.name, f]));
-  const sections = def.sections.map((s, si) => ({
+  const sections: FormViewSection[] = def.sections.map((s, si) => ({
     sys_id: sysId(`section:${tableName}.${s.id}`),
     name: s.label,
     order: si + 1,
@@ -954,7 +952,7 @@ function defaultFormView(tableName: string): FormViewConfig {
         order: 1,
         properties: { visible: true },
       },
-    ] as never,
+    ],
   });
   return {
     sys_id: sysId(`view:${tableName}.default`),
