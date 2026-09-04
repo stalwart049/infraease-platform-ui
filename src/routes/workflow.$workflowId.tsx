@@ -1,6 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
-import { AppShell } from "@/components/layout/AppShell";
 import { Icon } from "@/components/common/Icon";
 
 const WorkflowBuilder = lazy(() =>
@@ -34,7 +33,7 @@ function WorkflowBuilderPage() {
   useEffect(() => setMounted(true), []);
 
   return (
-    <AppShell>
+    <>
       <div className="p-3">
         {mounted ? (
           <Suspense fallback={<Loading />}>
@@ -44,7 +43,7 @@ function WorkflowBuilderPage() {
           <Loading />
         )}
       </div>
-    </AppShell>
+    </>
   );
 }
 

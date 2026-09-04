@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { AppShell } from "@/components/layout/AppShell";
 import { Icon } from "@/components/common/Icon";
 import { workflowService } from "@/services/workflowService";
 import type { WorkflowSummary } from "@/services/types";
@@ -37,7 +36,7 @@ function WorkflowIndexPage() {
   }, []);
 
   return (
-    <AppShell>
+    <>
       <div className="mx-auto w-full max-w-4xl p-4">
         <h1 className="text-[18px] font-semibold text-foreground">Workflows</h1>
         <p className="mt-1 text-[13px] text-muted-foreground">
@@ -80,6 +79,6 @@ function WorkflowIndexPage() {
           ))}
         </ul>
       </div>
-    </AppShell>
+    </>
   );
 }
