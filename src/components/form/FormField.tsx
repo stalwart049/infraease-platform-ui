@@ -1,6 +1,7 @@
 import { useId } from "react";
 import { Icon } from "@/components/common/Icon";
 import { ReferenceField } from "./ReferenceField";
+import { ScriptField } from "./ScriptField";
 import type { FieldMeta, RecordValue, ReferenceValue } from "@/services/types";
 import { cn } from "@/lib/utils";
 
