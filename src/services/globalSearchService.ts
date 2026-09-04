@@ -13,11 +13,27 @@ function text(value: RecordValue): string {
  * the UI never assumes which tables exist.
  */
 export const globalSearchService = {
+  /** Top matches for the navbar overlay. */
   async search(query: string, limit = 8): Promise<SearchResponse> {
-    const q = query.trim().toLowerCase();
-    if (!q) return { query, results: [], total: 0 };
+    return collect(query, limit, 4, 280);
+  },
 
-    return mockRequest(() => {
+  /** Every match across every searchable entity — powers the results page. */
+  async searchAll(query: string, limit = 300): Promise<SearchResponse> {
+    return collect(query, limit, limit, 340);
+  },
+};
+
+function collect(
+  query: string,
+  limit: number,
+  perTable: number,
+  latency: number,
+): Promise<SearchResponse> {
+  const q = query.trim().toLowerCase();
+  if (!q) return Promise.resolve({ query, results: [], total: 0 });
+
+  return mockRequest(() => {
       const results: SearchResult[] = [];
       let total = 0;
 
@@ -28,7 +44,7 @@ export const globalSearchService = {
           Object.values(row).some((v) => text(v).toLowerCase().includes(q)),
         );
         total += matches.length;
-        for (const row of matches.slice(0, 4)) {
+        for (const row of matches.slice(0, perTable)) {
           const subtitleValue = entity.subtitle_field ? text(row[entity.subtitle_field]) : "";
           results.push({
             table: entity.table,
@@ -43,6 +59,5 @@ export const globalSearchService = {
       }
 
       return { query, results: results.slice(0, limit), total };
-    }, 280);
-  },
-};
+  }, latency);
+}
