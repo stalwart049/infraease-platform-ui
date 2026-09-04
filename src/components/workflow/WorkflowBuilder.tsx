@@ -368,7 +368,13 @@ function Editor({ workflowId }: { workflowId: string }) {
             catalog={catalog}
             collapsed={collapsed}
             onToggleCollapsed={() => setCollapsed((c) => !c)}
-            onAdd={(component) => addComponent(component)}
+            onAdd={(component) => {
+              const box = wrapper.current?.getBoundingClientRect();
+              const center = box
+                ? flow.screenToFlowPosition({ x: box.x + box.width / 2, y: box.y + box.height / 2 })
+                : undefined;
+              addComponent(component, center);
+            }}
           />
 
           <div className="flex min-w-0 flex-1 flex-col">
@@ -417,7 +423,7 @@ function Editor({ workflowId }: { workflowId: string }) {
               >
                 <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} />
                 <Controls showInteractive={false} />
-                {minimap && <MiniMap pannable zoomable className="!bg-surface" />}
+                {minimap && <MiniMap pannable zoomable nodeColor="#94a3b8" className="!bg-surface" />}
               </ReactFlow>
             </div>
 
