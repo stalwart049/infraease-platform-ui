@@ -3,11 +3,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { listService } from "@/services/listService";
 import type {
   ListMetadata,
-  Page,
+  GroupedPage,
   DataRecord,
   FilterCondition,
   FieldMeta,
 } from "@/services/types";
+
+const GROUP_KEY = (table: string) => `infraease.groupBy.${table}`;
 
 const COLUMN_KEY = (table: string) => `infraease.columns.${table}`;
 
@@ -22,6 +24,7 @@ export function useList(tableName: string) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState<FilterCondition[]>([]);
   const [columnOrder, setColumnOrder] = useState<string[] | null>(null);
+  const [groupBy, setGroupByState] = useState<string | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -40,7 +43,18 @@ export function useList(tableName: string) {
   useEffect(() => {
     const stored = window.localStorage.getItem(COLUMN_KEY(tableName));
     setColumnOrder(stored ? (JSON.parse(stored) as string[]) : null);
+    setGroupByState(window.localStorage.getItem(GROUP_KEY(tableName)));
   }, [tableName]);
+
+  const setGroupBy = useCallback(
+    (field: string | null) => {
+      setGroupByState(field);
+      setPage(0);
+      if (field) window.localStorage.setItem(GROUP_KEY(tableName), field);
+      else window.localStorage.removeItem(GROUP_KEY(tableName));
+    },
+    [tableName],
+  );
 
   const allColumns: FieldMeta[] = useMemo(() => metaQuery.data?.columns ?? [], [metaQuery.data]);
 
@@ -84,8 +98,9 @@ export function useList(tableName: string) {
     sortBy,
     sortOrder,
     activeFilters,
+    groupBy,
   ] as const;
-  const recordsQuery = useQuery<Page<DataRecord>>({
+  const recordsQuery = useQuery<GroupedPage<DataRecord>>({
     queryKey: recordsKey,
     queryFn: () =>
       listService.getRecords(tableName, {
@@ -95,6 +110,7 @@ export function useList(tableName: string) {
         sortBy,
         sortOrder,
         filters: activeFilters,
+        groupBy,
       }),
     placeholderData: (prev) => prev,
   });
@@ -113,6 +129,8 @@ export function useList(tableName: string) {
   );
 
   const records = recordsQuery.data?.content ?? [];
+  const groups = recordsQuery.data?.groups ?? [];
+  const groupableColumns = useMemo(() => allColumns.filter((c) => c.groupable), [allColumns]);
 
   const toggleRow = useCallback((id: string) => {
     setSelected((prev) => {
@@ -176,6 +194,10 @@ export function useList(tableName: string) {
     sortBy,
     sortOrder,
     toggleSort,
+    groupBy,
+    setGroupBy,
+    groups,
+    groupableColumns,
     selected,
     toggleRow,
     toggleAll,
