@@ -11,8 +11,20 @@ export function menuLinkProps(route: string) {
   if (parts[0] === "form" && parts[1]) {
     return { to: "/form/$tableName/$recordId" as const, params: { tableName: parts[1], recordId: parts[2] ?? "new" } };
   }
+  if (parts[0] === "workflow") {
+    return parts[1]
+      ? ({ to: "/workflow/$workflowId" as const, params: { workflowId: parts[1] } })
+      : ({ to: "/workflow" as const });
+  }
+  if (parts[0] === "builder" && parts[1]) {
+    return { to: "/builder/$tableName" as const, params: { tableName: parts[1] } };
+  }
+  if (parts[0] === "search") {
+    return { to: "/search" as const };
+  }
   return { to: "/list/$tableName" as const, params: { tableName: parts[1] ?? "incident" } };
 }
+
 
 export function MenuTree({
   nodes,
