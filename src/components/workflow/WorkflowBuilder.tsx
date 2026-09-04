@@ -4,7 +4,6 @@ import {
   BackgroundVariant,
   Controls,
   MarkerType,
-  MiniMap,
   ReactFlow,
   ReactFlowProvider,
   useReactFlow,
@@ -13,6 +12,7 @@ import {
   type EdgeChange,
   type NodeChange,
   type OnSelectionChangeParams,
+
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useNavigate } from "@tanstack/react-router";
@@ -71,7 +71,7 @@ function Editor({ workflowId }: { workflowId: string }) {
   const [configuringId, setConfiguringId] = useState<string | null>(null);
   const [menu, setMenu] = useState<Menu | null>(null);
   const [collapsed, setCollapsed] = useState(false);
-  const [minimap, setMinimap] = useState(true);
+  
   const [snap, setSnap] = useState(true);
   const [zoom, setZoom] = useState(1);
   const [issues, setIssues] = useState<WorkflowIssue[] | null>(null);
