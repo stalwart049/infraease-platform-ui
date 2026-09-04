@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as BuilderTableNameRouteImport } from './routes/builder.$tableName'
 import { Route as ListTableNameRouteImport } from './routes/list.$tableName'
+import { Route as WorkflowIndexRouteImport } from './routes/workflow.index'
 import { Route as FormTableNameIndexRouteImport } from './routes/form.$tableName.index'
 import { Route as FormTableNameRecordIdRouteImport } from './routes/form.$tableName.$recordId'
 
@@ -36,6 +37,11 @@ const ListTableNameRoute = ListTableNameRouteImport.update({
   path: '/list/$tableName',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkflowIndexRoute = WorkflowIndexRouteImport.update({
+  id: '/workflow/',
+  path: '/workflow/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FormTableNameIndexRoute = FormTableNameIndexRouteImport.update({
   id: '/form/$tableName/',
   path: '/form/$tableName/',
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
+  '/workflow/': typeof WorkflowIndexRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName/': typeof FormTableNameIndexRoute
 }
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
+  '/workflow': typeof WorkflowIndexRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName': typeof FormTableNameIndexRoute
 }
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
+  '/workflow/': typeof WorkflowIndexRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName/': typeof FormTableNameIndexRoute
 }
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/builder/$tableName'
     | '/list/$tableName'
+    | '/workflow/'
     | '/form/$tableName/$recordId'
     | '/form/$tableName/'
   fileRoutesByTo: FileRoutesByTo
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/builder/$tableName'
     | '/list/$tableName'
+    | '/workflow'
     | '/form/$tableName/$recordId'
     | '/form/$tableName'
   id:
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/builder/$tableName'
     | '/list/$tableName'
+    | '/workflow/'
     | '/form/$tableName/$recordId'
     | '/form/$tableName/'
   fileRoutesById: FileRoutesById
@@ -104,6 +116,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   BuilderTableNameRoute: typeof BuilderTableNameRoute
   ListTableNameRoute: typeof ListTableNameRoute
+  WorkflowIndexRoute: typeof WorkflowIndexRoute
   FormTableNameRecordIdRoute: typeof FormTableNameRecordIdRoute
   FormTableNameIndexRoute: typeof FormTableNameIndexRoute
 }
@@ -138,6 +151,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ListTableNameRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/workflow/': {
+      id: '/workflow/'
+      path: '/workflow'
+      fullPath: '/workflow/'
+      preLoaderRoute: typeof WorkflowIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/form/$tableName/': {
       id: '/form/$tableName/'
       path: '/form/$tableName'
@@ -160,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   BuilderTableNameRoute: BuilderTableNameRoute,
   ListTableNameRoute: ListTableNameRoute,
+  WorkflowIndexRoute: WorkflowIndexRoute,
   FormTableNameRecordIdRoute: FormTableNameRecordIdRoute,
   FormTableNameIndexRoute: FormTableNameIndexRoute,
 }
