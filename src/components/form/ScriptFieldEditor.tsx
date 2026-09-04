@@ -15,7 +15,7 @@ loader.config({ monaco });
 export interface ScriptFieldEditorProps {
   value: string;
   onChange: (value: string) => void;
-  disabled?: boolean;
+  disabled?: boolean | undefined;
   height?: number | string;
 }
 
