@@ -53,6 +53,8 @@ export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?:
   const [active, setActive] = useState<DragData | null>(null);
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null);
   const dropRef = useRef<DropTarget | null>(null);
+  // the dragged card unmounts while a placeholder stands in for it, so keep its payload here
+  const activeRef = useRef<DragData | null>(null);
   const pointer = useRef({ x: 0, y: 0 });
 
   const sensors = useSensors(
@@ -77,6 +79,7 @@ export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?:
   }, []);
 
   const reset = useCallback(() => {
+    activeRef.current = null;
     setActive(null);
     dropRef.current = null;
     setDropTarget(null);
@@ -84,6 +87,7 @@ export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?:
 
   function onDragStart(e: DragStartEvent) {
     const data = (e.active.data.current as DragData) ?? null;
+    activeRef.current = data;
     setActive(data);
     const rect = e.active.rect.current.initial;
     if (rect) pointer.current = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
@@ -91,7 +95,7 @@ export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?:
 
   /** Resolves the live insertion point from the cursor, never by appending blindly. */
   function onDragMove(e: DragMoveEvent) {
-    const a = e.active.data.current as DragData | undefined;
+    const a = activeRef.current;
     if (!a || a.kind === "section") return;
     const o = e.over?.data.current as DragData | undefined;
     if (!o) return setTarget(null);
@@ -111,11 +115,10 @@ export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?:
   }
 
   function onDragEnd(e: DragEndEvent) {
-    const a = e.active.data.current as DragData | undefined;
+    const a = activeRef.current;
     const target = dropRef.current;
     reset();
     if (!a) return;
-    console.log('[fb] dragend', typeof a, Object.keys(a as object).join(','), (a as {kind?:string}).kind, JSON.stringify(target));
 
     if (a.kind === "section") {
       const o = e.over?.data.current as DragData | undefined;
