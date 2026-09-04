@@ -265,7 +265,8 @@ function Editor({ workflowId }: { workflowId: string }) {
             source: connection.source,
             source_handle: connection.sourceHandle ?? "default",
             target: connection.target,
-            target_handle: connection.targetHandle ?? "input",
+            // input side is chosen automatically when rendering; JSON stays canonical
+            target_handle: "input",
           },
         ],
       }));
