@@ -117,6 +117,9 @@ export function FormView({ tableName, recordId }: { tableName: string; recordId:
           },
         });
         break;
+      case "configure":
+        void navigate({ to: "/builder/$tableName", params: { tableName }, search: { view: "" } });
+        break;
       default:
         toast.info(`${action.label} is provided by the InfraEase backend.`);
     }

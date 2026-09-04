@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as BuilderTableNameRouteImport } from './routes/builder.$tableName'
 import { Route as ListTableNameRouteImport } from './routes/list.$tableName'
 import { Route as FormTableNameIndexRouteImport } from './routes/form.$tableName.index'
 import { Route as FormTableNameRecordIdRouteImport } from './routes/form.$tableName.$recordId'
@@ -23,6 +24,11 @@ const IndexRoute = IndexRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BuilderTableNameRoute = BuilderTableNameRouteImport.update({
+  id: '/builder/$tableName',
+  path: '/builder/$tableName',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ListTableNameRoute = ListTableNameRouteImport.update({
@@ -44,6 +50,7 @@ const FormTableNameRecordIdRoute = FormTableNameRecordIdRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
+  '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName/': typeof FormTableNameIndexRoute
@@ -51,6 +58,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
+  '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName': typeof FormTableNameIndexRoute
@@ -59,6 +67,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/search': typeof SearchRoute
+  '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName/': typeof FormTableNameIndexRoute
@@ -68,6 +77,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/search'
+    | '/builder/$tableName'
     | '/list/$tableName'
     | '/form/$tableName/$recordId'
     | '/form/$tableName/'
@@ -75,6 +85,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/search'
+    | '/builder/$tableName'
     | '/list/$tableName'
     | '/form/$tableName/$recordId'
     | '/form/$tableName'
@@ -82,6 +93,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/search'
+    | '/builder/$tableName'
     | '/list/$tableName'
     | '/form/$tableName/$recordId'
     | '/form/$tableName/'
@@ -90,6 +102,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SearchRoute: typeof SearchRoute
+  BuilderTableNameRoute: typeof BuilderTableNameRoute
   ListTableNameRoute: typeof ListTableNameRoute
   FormTableNameRecordIdRoute: typeof FormTableNameRecordIdRoute
   FormTableNameIndexRoute: typeof FormTableNameIndexRoute
@@ -109,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/builder/$tableName': {
+      id: '/builder/$tableName'
+      path: '/builder/$tableName'
+      fullPath: '/builder/$tableName'
+      preLoaderRoute: typeof BuilderTableNameRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/list/$tableName': {
@@ -138,6 +158,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SearchRoute: SearchRoute,
+  BuilderTableNameRoute: BuilderTableNameRoute,
   ListTableNameRoute: ListTableNameRoute,
   FormTableNameRecordIdRoute: FormTableNameRecordIdRoute,
   FormTableNameIndexRoute: FormTableNameIndexRoute,
