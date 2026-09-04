@@ -13,6 +13,9 @@ import type {
   ProfileMenuItem,
   SectionMeta,
   TableMeta,
+  ActivityEntry,
+  ActivityType,
+  ActivityTypeMeta,
 } from "./types";
 
 interface TableDefinition {
@@ -450,12 +453,18 @@ export function buildFormMetadata(tableName: string): FormMetadata {
   };
 }
 
+/** Field types the backend can group by. */
+const GROUPABLE_TYPES = ["select", "reference", "boolean", "date"];
+
 export function buildListMetadata(tableName: string): ListMetadata {
   const def = getDefinition(tableName);
   const byName = new Map(def.fields.map((f) => [f.name, f]));
   return {
     table: def.table,
-    columns: def.listColumns.map((n) => byName.get(n)).filter(Boolean) as FieldMeta[],
+    columns: (def.listColumns.map((n) => byName.get(n)).filter(Boolean) as FieldMeta[]).map((c) => ({
+      ...c,
+      groupable: c.groupable ?? GROUPABLE_TYPES.includes(c.type),
+    })),
     actions: LIST_ACTIONS,
     page_sizes: [10, 20, 50, 100],
   };
@@ -589,3 +598,105 @@ export const PROFILE_MENU: ProfileMenuItem[] = [
   { id: "help", label: "Help", icon: "circle-help" },
   { id: "logout", label: "Logout", icon: "log-out", separator_before: true },
 ];
+
+// ---------------------------------------------------------------- stage 2
+
+/** Tables the global search indexes. Served by the API, never hard-coded in UI. */
+export const SEARCHABLE_TABLES: { table: string; icon: string; subtitle_field?: string }[] = [
+  { table: "incident", icon: "alert-circle", subtitle_field: "short_description" },
+  { table: "request", icon: "clipboard-list", subtitle_field: "short_description" },
+  { table: "asset", icon: "laptop", subtitle_field: "model" },
+  { table: "sys_user", icon: "user", subtitle_field: "title" },
+  { table: "department", icon: "building", subtitle_field: "cost_center" },
+];
+
+export const ACTIVITY_TYPES: ActivityTypeMeta[] = [
+  { id: "comment", label: "Comment", icon: "message-square" },
+  { id: "work_note", label: "Work note", icon: "notebook-pen" },
+  { id: "system", label: "System", icon: "settings" },
+  { id: "field_change", label: "Field change", icon: "pencil-line" },
+  { id: "attachment", label: "Attachment", icon: "paperclip" },
+];
+
+const activityStore: Record<string, ActivityEntry[]> = {};
+
+function seedActivities(key: string): ActivityEntry[] {
+  const now = Date.UTC(2026, 6, 29, 10, 20);
+  return [
+    {
+      id: `${key}-3`,
+      type: "comment",
+      author: { id: "usr00003", displayName: "Anna Kowalski", initials: "AK" },
+      createdAt: new Date(now).toISOString(),
+      content: "approved this request",
+    },
+    {
+      id: `${key}-2`,
+      type: "field_change",
+      author: { displayName: "System" },
+      createdAt: new Date(now - 3600000 * 5).toISOString(),
+      content: "State changed from New to In Progress",
+      field_label: "State",
+      old_value: "New",
+      new_value: "In Progress",
+    },
+    {
+      id: `${key}-1`,
+      type: "system",
+      author: { displayName: "System" },
+      createdAt: new Date(now - 86400000 * 26).toISOString(),
+      content: "Record created",
+    },
+  ];
+}
+
+export function getActivities(tableName: string, recordId: string): ActivityEntry[] {
+  const key = `${tableName}:${recordId}`;
+  if (!activityStore[key]) activityStore[key] = seedActivities(key);
+  return activityStore[key]!;
+}
+
+export function addActivity(
+  tableName: string,
+  recordId: string,
+  entry: { type: ActivityType; content: string },
+): ActivityEntry {
+  const list = getActivities(tableName, recordId);
+  const created: ActivityEntry = {
+    id: `${tableName}-${recordId}-${Date.now()}`,
+    type: entry.type,
+    author: { id: "me", displayName: PROFILE.name, initials: PROFILE.initials },
+    createdAt: new Date().toISOString(),
+    content: entry.content,
+  };
+  list.unshift(created);
+  return created;
+}
+
+// ------------------------------------------------------------ favorites store
+
+const FAVORITE_SEED = ["incidents", "assets", "kb_articles"];
+let favoriteIds: string[] | null = null;
+
+export function getFavoriteIds(): string[] {
+  if (!favoriteIds) favoriteIds = [...FAVORITE_SEED];
+  return favoriteIds;
+}
+
+export function setFavorite(id: string, on: boolean): string[] {
+  const list = getFavoriteIds();
+  const idx = list.indexOf(id);
+  if (on && idx < 0) list.push(id);
+  if (!on && idx >= 0) list.splice(idx, 1);
+  return [...list];
+}
+
+/** Finds a menu node anywhere in the API-provided tree. */
+export function findMenuNode(id: string, nodes: MenuNode[] = MENUS): MenuNode | null {
+  for (const node of nodes) {
+    if (node.id === id) return node;
+    const child = node.children ? findMenuNode(id, node.children) : null;
+    if (child) return child;
+  }
+  return null;
+}

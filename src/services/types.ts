@@ -40,6 +40,8 @@ export interface FieldMeta {
   pattern_message?: string;
   /** relative column width hint for list view */
   width?: number;
+  /** the list view may group records by this field */
+  groupable?: boolean;
 }
 
 export interface SectionMeta {
@@ -115,6 +117,7 @@ export interface ListQuery {
   sortBy?: string | null;
   sortOrder?: "asc" | "desc";
   filters?: FilterCondition[];
+  groupBy?: string | null;
 }
 
 
@@ -159,4 +162,84 @@ export interface FilterCondition {
   field: string;
   operator: FilterOperator;
   value: string;
+}
+
+// ------------------------------------------------------------------ grouping
+
+export interface GroupBucket {
+  /** raw stored value ("" when the field is empty) */
+  value: string;
+  /** human readable label resolved from field metadata */
+  label: string;
+  /** total number of matching records in this group (server-wide) */
+  count: number;
+  /** records of this group that belong to the requested page */
+  records: DataRecord[];
+}
+
+export interface GroupedPage<T> extends Page<T> {
+  group_by: string | null;
+  groups: GroupBucket[];
+}
+
+// ------------------------------------------------------------- global search
+
+export interface SearchResult {
+  table: string;
+  table_label: string;
+  sys_id: string;
+  display_value: string;
+  subtitle?: string;
+  icon?: string;
+  /** route the frontend should navigate to, provided by the API */
+  route?: string;
+}
+
+export interface SearchResponse {
+  query: string;
+  results: SearchResult[];
+  total: number;
+}
+
+// ---------------------------------------------------------------- favorites
+
+export interface FavoriteItem {
+  id: string;
+  label: string;
+  icon?: string;
+  route?: string;
+}
+
+// ---------------------------------------------------------------- activities
+
+export type ActivityType = "comment" | "work_note" | "system" | "field_change" | "attachment";
+
+export interface ActivityAuthor {
+  id?: string;
+  displayName: string;
+  initials?: string;
+}
+
+export interface ActivityEntry {
+  id: string;
+  type: ActivityType;
+  author: ActivityAuthor;
+  createdAt: string;
+  content: string;
+  /** optional metadata for field_change entries */
+  field_label?: string;
+  old_value?: string;
+  new_value?: string;
+}
+
+export interface ActivityTypeMeta {
+  id: ActivityType;
+  label: string;
+  icon: string;
+}
+
+export interface ActivityStreamData {
+  types: ActivityTypeMeta[];
+  entries: ActivityEntry[];
+  can_post: boolean;
 }

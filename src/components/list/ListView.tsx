@@ -99,6 +99,9 @@ export function ListView({ tableName }: { tableName: string }) {
             onRemoveFilter={(id) => list.applyFilters(list.filters.filter((f) => f.id !== id))}
             onOpenColumns={() => setColumnsOpen(true)}
             personalized={list.personalized}
+            groupableColumns={list.groupableColumns}
+            groupBy={list.groupBy}
+            onGroupBy={list.setGroupBy}
           />
 
           {list.selected.size > 0 && (
@@ -168,6 +171,8 @@ export function ListView({ tableName }: { tableName: string }) {
                 tableName={tableName}
                 columns={list.columns}
                 records={list.records}
+                groups={list.groups}
+                groupBy={list.groupBy}
                 loading={list.loading}
                 sortBy={list.sortBy}
                 sortOrder={list.sortOrder}

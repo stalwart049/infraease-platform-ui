@@ -1,5 +1,6 @@
 import { Icon } from "@/components/common/Icon";
 import { ActionButton } from "@/components/common/ActionButton";
+import { GroupBy } from "./GroupBy";
 import type { FieldMeta, FilterCondition } from "@/services/types";
 
 export function FilterBar({
@@ -14,6 +15,9 @@ export function FilterBar({
   onRemoveFilter,
   onOpenColumns,
   personalized,
+  groupableColumns,
+  groupBy,
+  onGroupBy,
 }: {
   value: string;
   onChange: (v: string) => void;
@@ -26,6 +30,9 @@ export function FilterBar({
   onRemoveFilter: (id: string) => void;
   onOpenColumns: () => void;
   personalized: boolean;
+  groupableColumns: FieldMeta[];
+  groupBy: string | null;
+  onGroupBy: (field: string | null) => void;
 }) {
   const labelFor = (name: string) => columns.find((c) => c.name === name)?.label ?? name;
 
@@ -64,6 +71,8 @@ export function FilterBar({
             </span>
           )}
         </ActionButton>
+
+        <GroupBy columns={groupableColumns} value={groupBy} onChange={onGroupBy} />
 
         <ActionButton icon="sliders-horizontal" onClick={onOpenColumns}>
           Columns{personalized ? " *" : ""}
