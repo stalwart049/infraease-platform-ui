@@ -825,3 +825,195 @@ export function findMenuNode(id: string, nodes: MenuNode[] = MENUS): MenuNode | 
   }
   return null;
 }
+
+// ---------------------------------------------------------------- form views
+
+import type {
+  ClientScriptRef,
+  ClientScriptType,
+  FormBuilderData,
+  FormViewConfig,
+  FormViewFieldRef,
+  JournalComponentMeta,
+} from "./types";
+
+/** Deterministic pseudo sys_id so mock records look like real ones. */
+function sysId(seedText: string): string {
+  let h1 = 0x811c9dc5;
+  let out = "";
+  for (let i = 0; i < 4; i++) {
+    for (let c = 0; c < seedText.length; c++) {
+      h1 ^= seedText.charCodeAt(c) + i * 31;
+      h1 = Math.imul(h1, 0x01000193) >>> 0;
+    }
+    out += h1.toString(16).padStart(8, "0");
+  }
+  return out.slice(0, 32);
+}
+
+const BACKEND_TYPES: Record<string, string> = {
+  text: "string",
+  textarea: "string",
+  email: "string",
+  phone: "string",
+  url: "string",
+  password: "string",
+  script: "script",
+  number: "integer",
+  date: "glide_date",
+  datetime: "glide_date_time",
+  boolean: "boolean",
+  select: "choice",
+  reference: "reference",
+};
+
+export const JOURNAL_COMPONENTS: JournalComponentMeta[] = [
+  { journalType: "comments", label: "Comments", description: "Customer visible journal input" },
+  { journalType: "work_notes", label: "Work Notes", description: "Internal journal input" },
+  { journalType: "activity_stream", label: "Activity Stream", description: "Full record activity timeline" },
+];
+
+const JOURNAL_LABEL: Record<string, string> = Object.fromEntries(
+  JOURNAL_COMPONENTS.map((j) => [j.journalType, j.label]),
+);
+
+export function journalLabel(type: string): string {
+  return JOURNAL_LABEL[type] ?? type;
+}
+
+function fieldRef(tableName: string, f: FieldMeta): FormViewFieldRef {
+  return {
+    sys_id: sysId(`field:${tableName}.${f.name}`),
+    name: f.name,
+    display_value: f.label,
+    type: BACKEND_TYPES[f.type] ?? "string",
+  };
+}
+
+/** Saved configurations, keyed by `${table}:${viewId}`. */
+const formViewStore: Record<string, FormViewConfig> = {};
+
+const SCRIPT_TYPES: ClientScriptType[] = ["onChange", "onLoad", "onSubmit"];
+
+function clientScriptsFor(tableName: string): Record<string, ClientScriptRef[]> {
+  const def = getDefinition(tableName);
+  const map: Record<string, ClientScriptRef[]> = {};
+  def.fields.forEach((f, i) => {
+    if (i % 3 !== 0) return; // only some fields carry scripts
+    const count = i % 6 === 0 ? 2 : 1;
+    map[f.name] = Array.from({ length: count }).map((_, n) => {
+      const type = SCRIPT_TYPES[(i + n) % SCRIPT_TYPES.length]!;
+      const verb = type === "onLoad" ? "Initialize" : type === "onSubmit" ? "Check" : "Validate";
+      const sid = sysId(`script:${tableName}.${f.name}.${n}`);
+      return {
+        sys_id: sid,
+        name: `${verb} ${f.label}`,
+        type,
+        field: f.name,
+        table: tableName,
+        active: true,
+        route: `/form/sys_script_client/${sid}`,
+      };
+    });
+  });
+  return map;
+}
+
+function defaultFormView(tableName: string): FormViewConfig {
+  const def = getDefinition(tableName);
+  const byName = new Map(def.fields.map((f) => [f.name, f]));
+  const sections = def.sections.map((s, si) => ({
+    sys_id: sysId(`section:${tableName}.${s.id}`),
+    name: s.label,
+    order: si + 1,
+    fields: s.fields
+      .map((name) => byName.get(name))
+      .filter((f): f is FieldMeta => !!f)
+      .map((f, fi) => ({
+        sys_id: sysId(`sf:${tableName}.${s.id}.${f.name}`),
+        type: "field" as const,
+        field: fieldRef(tableName, f),
+        order: fi + 1,
+        properties: {
+          mandatory: !!f.mandatory,
+          readonly: !!f.readonly,
+          visible: f.visible !== false,
+        },
+      })),
+  }));
+  sections.push({
+    sys_id: sysId(`section:${tableName}.activity`),
+    name: "Activity",
+    order: sections.length + 1,
+    fields: [
+      {
+        sys_id: sysId(`sf:${tableName}.activity.activity_stream`),
+        type: "journal",
+        journalType: "activity_stream",
+        label: "Activity Stream",
+        order: 1,
+        properties: { visible: true },
+      },
+    ] as never,
+  });
+  return {
+    sys_id: sysId(`view:${tableName}.default`),
+    name: "Default",
+    table: {
+      sys_id: sysId(`table:${tableName}`),
+      name: tableName,
+      display_value: def.table.label,
+    },
+    sections,
+  };
+}
+
+export function getFormViewData(tableName: string, viewId?: string): FormBuilderData {
+  const def = getDefinition(tableName);
+  const key = `${tableName}:${viewId ?? "default"}`;
+  const saved = formViewStore[key];
+  const formView = saved ? structuredClone(saved) : defaultFormView(tableName);
+  return {
+    formView,
+    fields: def.fields.map((f) => fieldRef(tableName, f)),
+    journalComponents: JOURNAL_COMPONENTS,
+    clientScripts: clientScriptsFor(tableName),
+    views: [{ sys_id: formView.sys_id, name: formView.name }],
+  };
+}
+
+export function saveFormViewConfig(config: FormViewConfig): FormViewConfig {
+  const key = `${config.table.name}:default`;
+  formViewStore[key] = structuredClone(config);
+  // keep the rendered Form View in sync with the configuration
+  const def = definitions[config.table.name];
+  if (def) {
+    const placed = new Set<string>();
+    def.sections = config.sections
+      .slice()
+      .sort((a, b) => a.order - b.order)
+      .map((s) => ({
+        id: s.sys_id,
+        label: s.name,
+        fields: s.fields
+          .slice()
+          .sort((a, b) => a.order - b.order)
+          .filter((i) => i.type === "field")
+          .map((i) => (i as { field: FormViewFieldRef }).field.name),
+      }));
+    def.sections.forEach((s) => s.fields.forEach((f) => placed.add(f)));
+    def.fields = def.fields.map((f) => {
+      const item = config.sections
+        .flatMap((s) => s.fields)
+        .find((i) => i.type === "field" && (i as { field: FormViewFieldRef }).field.name === f.name);
+      if (!item || item.type !== "field") return { ...f, visible: false };
+      return {
+        ...f,
+        mandatory: item.properties.mandatory,
+        readonly: item.properties.readonly,
+        visible: item.properties.visible,
+      };
+    });
+  }
+  return structuredClone(config);
+}
