@@ -435,10 +435,10 @@ function Editor({ workflowId }: { workflowId: string }) {
               savedAt={editor.savedAt}
               onUndo={editor.undo}
               onRedo={editor.redo}
-              onZoomIn={() => flow.zoomIn()}
-              onZoomOut={() => flow.zoomOut()}
-              onFit={() => flow.fitView({ padding: 0.2 })}
-              
+              onZoomIn={() => !zoomLocked && flow.zoomIn()}
+              onZoomOut={() => !zoomLocked && flow.zoomOut()}
+              onFit={() => !zoomLocked && flow.fitView({ padding: 0.2 })}
+              onToggleZoomLock={() => setZoomLocked((z) => !z)}
               onToggleSnap={() => setSnap((s) => !s)}
               onValidate={() => runValidation()}
             />
