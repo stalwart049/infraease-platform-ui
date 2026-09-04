@@ -74,6 +74,7 @@ function Editor({ workflowId }: { workflowId: string }) {
   
   const [snap, setSnap] = useState(true);
   const [zoom, setZoom] = useState(1);
+  const [zoomLocked, setZoomLocked] = useState(false);
   const [issues, setIssues] = useState<WorkflowIssue[] | null>(null);
 
   const index = useMemo(() => buildComponentIndex(catalog), [catalog]);
@@ -423,9 +424,10 @@ function Editor({ workflowId }: { workflowId: string }) {
           <div className="flex min-w-0 flex-1 flex-col">
             <WorkflowToolbar
               zoom={zoom}
+              zoomLocked={zoomLocked}
               canUndo={editor.canUndo}
               canRedo={editor.canRedo}
-              
+
               snap={snap}
               issueCount={issues?.length ?? 0}
               dirty={editor.dirty}
@@ -433,10 +435,10 @@ function Editor({ workflowId }: { workflowId: string }) {
               savedAt={editor.savedAt}
               onUndo={editor.undo}
               onRedo={editor.redo}
-              onZoomIn={() => flow.zoomIn()}
-              onZoomOut={() => flow.zoomOut()}
-              onFit={() => flow.fitView({ padding: 0.2 })}
-              
+              onZoomIn={() => !zoomLocked && flow.zoomIn()}
+              onZoomOut={() => !zoomLocked && flow.zoomOut()}
+              onFit={() => !zoomLocked && flow.fitView({ padding: 0.2 })}
+              onToggleZoomLock={() => setZoomLocked((z) => !z)}
               onToggleSnap={() => setSnap((s) => !s)}
               onValidate={() => runValidation()}
             />
@@ -479,10 +481,14 @@ function Editor({ workflowId }: { workflowId: string }) {
                 edgesFocusable
                 deleteKeyCode={null}
                 multiSelectionKeyCode={["Shift", "Meta", "Control"]}
+                zoomOnScroll={!zoomLocked}
+                zoomOnPinch={!zoomLocked}
+                zoomOnDoubleClick={!zoomLocked}
+                preventScrolling={!zoomLocked}
                 proOptions={{ hideAttribution: true }}
               >
                 <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} />
-                <Controls showInteractive={false} />
+                <Controls showInteractive={false} showZoom={!zoomLocked} showFitView={!zoomLocked} />
 
               </ReactFlow>
             </div>

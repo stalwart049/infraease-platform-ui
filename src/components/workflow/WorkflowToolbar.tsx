@@ -3,6 +3,7 @@ import { Icon } from "@/components/common/Icon";
 
 interface Props {
   zoom: number;
+  zoomLocked: boolean;
   canUndo: boolean;
   canRedo: boolean;
   snap: boolean;
@@ -15,7 +16,7 @@ interface Props {
   onZoomIn: () => void;
   onZoomOut: () => void;
   onFit: () => void;
-  
+  onToggleZoomLock: () => void;
   onToggleSnap: () => void;
   onValidate: () => void;
 }
@@ -26,14 +27,29 @@ export function WorkflowToolbar(p: Props) {
       <ToolButton icon="undo-2" label="Undo" onClick={p.onUndo} disabled={!p.canUndo} />
       <ToolButton icon="redo-2" label="Redo" onClick={p.onRedo} disabled={!p.canRedo} />
       <Divider />
-      <ToolButton icon="zoom-out" label="Zoom out" onClick={p.onZoomOut} />
+      <ToolButton icon="zoom-out" label="Zoom out" onClick={p.onZoomOut} disabled={p.zoomLocked} />
       <span className="w-12 text-center text-[11.5px] tabular-nums text-muted-foreground">
         {Math.round(p.zoom * 100)}%
       </span>
-      <ToolButton icon="zoom-in" label="Zoom in" onClick={p.onZoomIn} />
-      <ToolButton icon="maximize" label="Fit to screen" onClick={p.onFit} />
+      <ToolButton icon="zoom-in" label="Zoom in" onClick={p.onZoomIn} disabled={p.zoomLocked} />
+      <ToolButton icon="maximize" label="Fit to screen" onClick={p.onFit} disabled={p.zoomLocked} />
+      <button
+        type="button"
+        onClick={p.onToggleZoomLock}
+        aria-pressed={p.zoomLocked}
+        title={p.zoomLocked ? "Zoom Locked — click to unlock" : "Zoom Unlocked — click to lock"}
+        className={cn(
+          "flex h-7 items-center gap-1.5 rounded-[3px] border px-2 text-[12px] font-medium",
+          p.zoomLocked
+            ? "border-primary/40 bg-primary/10 text-primary"
+            : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
+        )}
+      >
+        <Icon name={p.zoomLocked ? "lock" : "lock-open"} className="size-3.5" />
+        {p.zoomLocked ? "Zoom Locked" : "Zoom Unlocked"}
+      </button>
       <Divider />
-      
+
       <ToolButton icon="grid-3x3" label="Snap to grid" onClick={p.onToggleSnap} active={p.snap} />
       <Divider />
       <button
