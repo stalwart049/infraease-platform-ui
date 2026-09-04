@@ -91,6 +91,7 @@ export function InlineFieldEditor({
         </select>
       );
     case "textarea":
+    case "script":
       return (
         <textarea
           ref={ref as React.RefObject<HTMLTextAreaElement>}

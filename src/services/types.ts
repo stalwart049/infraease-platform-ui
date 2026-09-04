@@ -13,7 +13,8 @@ export type FieldType =
   | "select"
   | "reference"
   | "password"
-  | "url";
+  | "url"
+  | "script";
 
 export interface ChoiceOption {
   value: string;
