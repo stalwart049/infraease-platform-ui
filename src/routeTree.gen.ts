@@ -14,6 +14,7 @@ import { Route as SearchRouteImport } from './routes/search'
 import { Route as BuilderTableNameRouteImport } from './routes/builder.$tableName'
 import { Route as ListTableNameRouteImport } from './routes/list.$tableName'
 import { Route as WorkflowIndexRouteImport } from './routes/workflow.index'
+import { Route as WorkflowWorkflowIdRouteImport } from './routes/workflow.$workflowId'
 import { Route as FormTableNameIndexRouteImport } from './routes/form.$tableName.index'
 import { Route as FormTableNameRecordIdRouteImport } from './routes/form.$tableName.$recordId'
 
@@ -42,6 +43,11 @@ const WorkflowIndexRoute = WorkflowIndexRouteImport.update({
   path: '/workflow/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const WorkflowWorkflowIdRoute = WorkflowWorkflowIdRouteImport.update({
+  id: '/workflow/$workflowId',
+  path: '/workflow/$workflowId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const FormTableNameIndexRoute = FormTableNameIndexRouteImport.update({
   id: '/form/$tableName/',
   path: '/form/$tableName/',
@@ -58,6 +64,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
+  '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
   '/workflow/': typeof WorkflowIndexRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName/': typeof FormTableNameIndexRoute
@@ -67,6 +74,7 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
+  '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
   '/workflow': typeof WorkflowIndexRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName': typeof FormTableNameIndexRoute
@@ -77,6 +85,7 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
+  '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
   '/workflow/': typeof WorkflowIndexRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName/': typeof FormTableNameIndexRoute
@@ -88,6 +97,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/builder/$tableName'
     | '/list/$tableName'
+    | '/workflow/$workflowId'
     | '/workflow/'
     | '/form/$tableName/$recordId'
     | '/form/$tableName/'
@@ -97,6 +107,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/builder/$tableName'
     | '/list/$tableName'
+    | '/workflow/$workflowId'
     | '/workflow'
     | '/form/$tableName/$recordId'
     | '/form/$tableName'
@@ -106,6 +117,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/builder/$tableName'
     | '/list/$tableName'
+    | '/workflow/$workflowId'
     | '/workflow/'
     | '/form/$tableName/$recordId'
     | '/form/$tableName/'
@@ -116,6 +128,7 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   BuilderTableNameRoute: typeof BuilderTableNameRoute
   ListTableNameRoute: typeof ListTableNameRoute
+  WorkflowWorkflowIdRoute: typeof WorkflowWorkflowIdRoute
   WorkflowIndexRoute: typeof WorkflowIndexRoute
   FormTableNameRecordIdRoute: typeof FormTableNameRecordIdRoute
   FormTableNameIndexRoute: typeof FormTableNameIndexRoute
@@ -158,6 +171,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof WorkflowIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/workflow/$workflowId': {
+      id: '/workflow/$workflowId'
+      path: '/workflow/$workflowId'
+      fullPath: '/workflow/$workflowId'
+      preLoaderRoute: typeof WorkflowWorkflowIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/form/$tableName/': {
       id: '/form/$tableName/'
       path: '/form/$tableName'
@@ -180,6 +200,7 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   BuilderTableNameRoute: BuilderTableNameRoute,
   ListTableNameRoute: ListTableNameRoute,
+  WorkflowWorkflowIdRoute: WorkflowWorkflowIdRoute,
   WorkflowIndexRoute: WorkflowIndexRoute,
   FormTableNameRecordIdRoute: FormTableNameRecordIdRoute,
   FormTableNameIndexRoute: FormTableNameIndexRoute,
