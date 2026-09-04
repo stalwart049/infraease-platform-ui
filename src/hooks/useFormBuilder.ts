@@ -29,7 +29,6 @@ export function useFormBuilder(tableName: string, viewId?: string) {
     formBuilderService
       .getFormView(tableName, viewId)
       .then((res) => {
-        console.log("[fb] loaded", cancelled, res.fields.length);
         if (cancelled) return;
         setData(res);
         setConfig(normalize(res.formView));
@@ -37,7 +36,6 @@ export function useFormBuilder(tableName: string, viewId?: string) {
         setDirty(false);
       })
       .catch((e: unknown) => {
-        console.log("[fb] error", e);
         if (!cancelled) setError(e instanceof Error ? e.message : "Unable to load the form view.");
       })
       .finally(() => {
