@@ -1,8 +1,8 @@
 // Browser-only module: loaded lazily by ScriptField so Monaco never touches SSR.
 import Editor, { loader } from "@monaco-editor/react";
 import * as monaco from "monaco-editor";
-import EditorWorker from "monaco-editor/esm/vs/editor/editor.worker?worker";
-import TsWorker from "monaco-editor/esm/vs/language/typescript/ts.worker?worker";
+import EditorWorker from "monaco-editor/editor/editor.worker?worker";
+import TsWorker from "monaco-editor/language/typescript/ts.worker?worker";
 
 self.MonacoEnvironment = {
   getWorker(_workerId: string, label: string) {
