@@ -424,7 +424,7 @@ function Editor({ workflowId }: { workflowId: string }) {
               zoom={zoom}
               canUndo={editor.canUndo}
               canRedo={editor.canRedo}
-              minimap={minimap}
+              
               snap={snap}
               issueCount={issues?.length ?? 0}
               dirty={editor.dirty}
@@ -435,7 +435,7 @@ function Editor({ workflowId }: { workflowId: string }) {
               onZoomIn={() => flow.zoomIn()}
               onZoomOut={() => flow.zoomOut()}
               onFit={() => flow.fitView({ padding: 0.2 })}
-              onToggleMinimap={() => setMinimap((m) => !m)}
+              
               onToggleSnap={() => setSnap((s) => !s)}
               onValidate={() => runValidation()}
             />
@@ -450,8 +450,22 @@ function Editor({ workflowId }: { workflowId: string }) {
                 onConnect={onConnect}
                 isValidConnection={isValidConnection}
                 onSelectionChange={onSelectionChange}
+                onEdgeClick={(event, edge) => {
+                  const additive = event.shiftKey || event.metaKey || event.ctrlKey;
+                  setSelection((s) => ({
+                    nodes: additive ? s.nodes : [],
+                    edges: additive
+                      ? s.edges.includes(edge.id)
+                        ? s.edges.filter((id) => id !== edge.id)
+                        : [...s.edges, edge.id]
+                      : [edge.id],
+                  }));
+                }}
                 onNodeDoubleClick={(_, n) => setConfiguringId(n.id)}
-                onPaneClick={() => setMenu(null)}
+                onPaneClick={() => {
+                  setMenu(null);
+                  setSelection({ nodes: [], edges: [] });
+                }}
                 onMove={(_, viewport) => setZoom(viewport.zoom)}
                 snapToGrid={snap}
                 snapGrid={[GRID, GRID]}
@@ -459,13 +473,16 @@ function Editor({ workflowId }: { workflowId: string }) {
                 minZoom={0.2}
                 maxZoom={2}
                 fitView
+                fitViewOptions={{ padding: 0.25, maxZoom: 1 }}
+                elementsSelectable
+                edgesFocusable
                 deleteKeyCode={null}
                 multiSelectionKeyCode={["Shift", "Meta", "Control"]}
                 proOptions={{ hideAttribution: true }}
               >
                 <Background variant={BackgroundVariant.Dots} gap={GRID} size={1} />
                 <Controls showInteractive={false} />
-                {minimap && <MiniMap pannable zoomable nodeColor="#94a3b8" className="!bg-surface" />}
+
               </ReactFlow>
             </div>
 
