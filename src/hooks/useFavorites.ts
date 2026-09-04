@@ -14,7 +14,11 @@ export function useFavorites() {
   const mutation = useMutation({
     mutationFn: ({ id, on }: { id: string; on: boolean }) =>
       on ? favoriteService.add(id) : favoriteService.remove(id),
-    onSuccess: (items) => queryClient.setQueryData(["favorites"], items),
+    onSuccess: (items) => {
+      queryClient.setQueryData(["favorites"], items);
+      // the favorites menu section is served by the menu API — refresh it too
+      void queryClient.invalidateQueries({ queryKey: ["menus"] });
+    },
   });
 
   const favorites = query.data ?? [];

@@ -127,6 +127,8 @@ export interface MenuNode {
   icon?: string;
   route?: string;
   children?: MenuNode[];
+  /** message rendered by the UI when the API returns no children */
+  empty_message?: string;
 }
 
 export interface ProfileInfo {
@@ -175,6 +177,8 @@ export interface GroupBucket {
   count: number;
   /** records of this group that belong to the requested page */
   records: DataRecord[];
+  /** how many of this group's records are on the requested page */
+  page_count: number;
 }
 
 export interface GroupedPage<T> extends Page<T> {
