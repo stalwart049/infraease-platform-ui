@@ -32,7 +32,14 @@ import { WorkflowPalette } from "./WorkflowPalette";
 import { WorkflowToolbar } from "./WorkflowToolbar";
 import { ValidationPanel } from "./ValidationPanel";
 import { NodeConfigDrawer } from "./NodeConfigDrawer";
-import { WorkflowNodeCard, WorkflowUIContext, type WFNode } from "./WorkflowNodeCard";
+import {
+  WorkflowNodeCard,
+  WorkflowUIContext,
+  targetHandleId,
+  type TargetSide,
+  type WFNode,
+} from "./WorkflowNodeCard";
+
 import type { WorkflowComponentMeta, WorkflowDefinition, WorkflowNode } from "@/services/types";
 
 const nodeTypes = { workflow: WorkflowNodeCard };
