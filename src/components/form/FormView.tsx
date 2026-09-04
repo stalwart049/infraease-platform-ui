@@ -6,6 +6,7 @@ import { FormHeader } from "./FormHeader";
 import { FormSectionTabs } from "./FormSectionTabs";
 import { FormField } from "./FormField";
 import { RelatedLinks } from "./RelatedLinks";
+import { ActivityStream } from "./ActivityStream";
 import { ActionButton } from "@/components/common/ActionButton";
 import { Icon } from "@/components/common/Icon";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -146,7 +147,7 @@ export function FormView({ tableName, recordId }: { tableName: string; recordId:
       {form.loading || !meta ? (
         <FormSkeleton />
       ) : (
-        <div className="mx-auto max-w-6xl px-0 py-4 sm:px-6">
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-0 py-4 sm:px-6 lg:grid-cols-[minmax(0,1fr)_360px]">
           <div className="border border-border bg-surface sm:rounded-[4px]">
             <FormSectionTabs
               sections={meta.sections}
@@ -173,8 +174,13 @@ export function FormView({ tableName, recordId }: { tableName: string; recordId:
             </div>
             <RelatedLinks links={meta.related_links} />
           </div>
+
+          <div className="px-4 sm:px-0 lg:sticky lg:top-16 lg:self-start">
+            <ActivityStream tableName={tableName} recordId={recordId} />
+          </div>
         </div>
       )}
+
 
       <ConfirmDialog
         open={!!confirm}

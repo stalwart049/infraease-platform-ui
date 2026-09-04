@@ -3,6 +3,8 @@ import { toast } from "sonner";
 import { Icon } from "@/components/common/Icon";
 import { MenuDropdown } from "./MenuDropdown";
 import { UserProfileMenu } from "./UserProfileMenu";
+import { GlobalSearch } from "./GlobalSearch";
+import { Favorites } from "./Favorites";
 import type { MenuNode, ProfileInfo, ProfileMenuItem } from "@/services/types";
 
 export function Navbar({
@@ -50,7 +52,7 @@ export function Navbar({
           <span className="text-[14px] font-semibold tracking-[0.14em]">INFRAEASE</span>
         </Link>
 
-        <nav aria-label="Primary" className="ml-2 hidden min-w-0 flex-1 items-center gap-0.5 md:flex">
+        <nav aria-label="Primary" className="ml-2 hidden min-w-0 items-center gap-0.5 md:flex">
           {loading
             ? Array.from({ length: 4 }).map((_, i) => (
                 <div key={i} className="h-6 w-20 animate-pulse rounded-[3px] bg-nav-hover" />
@@ -68,7 +70,10 @@ export function Navbar({
               ))}
         </nav>
 
+        <GlobalSearch />
+
         <div className="ml-auto flex items-center gap-1">
+          <Favorites />
           <button
             type="button"
             aria-label={`Notifications${profile ? `: ${profile.notifications} unread` : ""}`}
