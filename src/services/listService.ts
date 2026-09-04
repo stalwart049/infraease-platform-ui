@@ -98,6 +98,7 @@ function buildGroups(
     label: groupLabel(key, field),
     count: counts.get(key) ?? byKey.get(key)!.length,
     records: byKey.get(key)!,
+    page_count: byKey.get(key)!.length,
   }));
 }
 
@@ -145,6 +146,19 @@ export const listService = {
       }
       if (sortBy) {
         rows.sort((a, b) => compare(a[sortBy], b[sortBy]) * (sortOrder === "desc" ? -1 : 1));
+      }
+      // grouping is applied before pagination so a page never interleaves groups
+      if (groupBy) {
+        const keys = [...new Set(rows.map((r) => groupKey(r[groupBy])))];
+        const rank = new Map(keys.map((k, i) => [k, i]));
+        rows = rows
+          .map((row, i) => ({ row, i }))
+          .sort((a, b) => {
+            const ka = rank.get(groupKey(a.row[groupBy]))!;
+            const kb = rank.get(groupKey(b.row[groupBy]))!;
+            return ka - kb || a.i - b.i;
+          })
+          .map((x) => x.row);
       }
       const totalElements = rows.length;
       const totalPages = Math.max(1, Math.ceil(totalElements / pageSize));
