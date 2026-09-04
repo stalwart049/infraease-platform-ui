@@ -2,6 +2,9 @@ import { mockRequest, ApiError } from "./api";
 import { buildListMetadata, getTableData } from "./mockDb";
 import type {
   DataRecord,
+  FieldMeta,
+  GroupBucket,
+  GroupedPage,
   FilterCondition,
   ListMetadata,
   ListQuery,
@@ -64,13 +67,62 @@ function isActive(c: FilterCondition) {
   );
 }
 
+/** Groups the matching rows server-side and attaches the current page slice. */
+function buildGroups(
+  tableName: string,
+  groupBy: string,
+  allRows: DataRecord[],
+  pageRows: DataRecord[],
+): GroupBucket[] {
+  const field: FieldMeta | undefined = buildListMetadata(tableName).columns.find(
+    (c) => c.name === groupBy,
+  );
+  const counts = new Map<string, number>();
+  allRows.forEach((row) => {
+    const key = groupKey(row[groupBy]);
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  });
+
+  const order: string[] = [];
+  const byKey = new Map<string, DataRecord[]>();
+  pageRows.forEach((row) => {
+    const key = groupKey(row[groupBy]);
+    if (!byKey.has(key)) {
+      byKey.set(key, []);
+      order.push(key);
+    }
+    byKey.get(key)!.push(row);
+  });
+
+  return order.map((key) => ({
+    value: key,
+    label: groupLabel(key, field),
+    count: counts.get(key) ?? byKey.get(key)!.length,
+    records: byKey.get(key)!,
+  }));
+}
+
+function groupKey(value: RecordValue): string {
+  if (value == null || value === "") return "";
+  if (typeof value === "object") return value.display_value ?? "";
+  if (typeof value === "boolean") return value ? "true" : "false";
+  return String(value);
+}
+
+function groupLabel(key: string, field?: FieldMeta): string {
+  if (key === "") return "(empty)";
+  if (field?.type === "boolean") return key === "true" ? "Yes" : "No";
+  const opt = field?.choices?.find((c) => c.value === key);
+  return opt ? opt.label : key;
+}
+
 export const listService = {
   async getListMetadata(tableName: string): Promise<ListMetadata> {
     return mockRequest(() => buildListMetadata(tableName), 180);
   },
 
-  /** Server-side search + condition filters + sort + pagination. */
-  async getRecords(tableName: string, query: ListQuery = {}): Promise<Page<DataRecord>> {
+  /** Server-side search + condition filters + sort + grouping + pagination. */
+  async getRecords(tableName: string, query: ListQuery = {}): Promise<GroupedPage<DataRecord>> {
     const {
       page = 0,
       pageSize = 10,
@@ -78,6 +130,7 @@ export const listService = {
       sortBy = null,
       sortOrder = "asc",
       filters = [],
+      groupBy = null,
     } = query;
     return mockRequest(() => {
       let rows = [...getTableData(tableName)];
@@ -98,12 +151,15 @@ export const listService = {
       const totalPages = Math.max(1, Math.ceil(totalElements / pageSize));
       const safePage = Math.min(page, totalPages - 1);
       const start = safePage * pageSize;
+      const content = rows.slice(start, start + pageSize);
       return {
-        content: rows.slice(start, start + pageSize),
+        content,
         page: safePage,
         pageSize,
         totalElements,
         totalPages,
+        group_by: groupBy,
+        groups: groupBy ? buildGroups(tableName, groupBy, rows, content) : [],
       };
     }, 320);
   },

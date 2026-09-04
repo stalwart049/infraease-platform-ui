@@ -117,6 +117,7 @@ export interface ListQuery {
   sortBy?: string | null;
   sortOrder?: "asc" | "desc";
   filters?: FilterCondition[];
+  groupBy?: string | null;
 }
 
 
