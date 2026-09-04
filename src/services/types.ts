@@ -40,6 +40,8 @@ export interface FieldMeta {
   pattern_message?: string;
   /** relative column width hint for list view */
   width?: number;
+  /** the list view may group records by this field */
+  groupable?: boolean;
 }
 
 export interface SectionMeta {
