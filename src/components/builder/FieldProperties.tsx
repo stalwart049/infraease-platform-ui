@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { menuLinkProps } from "@/components/layout/MenuTree";
 import { Icon } from "@/components/common/Icon";
 import { itemLabel } from "@/lib/form-builder-utils";
 import type { ClientScriptRef, FormViewItem, FormViewSection } from "@/services/types";
@@ -94,7 +95,7 @@ export function FieldProperties({
                       <p className="truncate text-[13px] text-foreground">{s.name}</p>
                       {s.route && (
                         <Link
-                          to={s.route}
+                          {...menuLinkProps(s.route)}
                           className="shrink-0 text-muted-foreground hover:text-primary"
                           aria-label={`Open client script ${s.name}`}
                         >
