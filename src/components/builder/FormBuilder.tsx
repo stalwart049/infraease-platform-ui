@@ -115,7 +115,7 @@ export function FormBuilder({ tableName, viewId }: { tableName: string; viewId?:
     const target = dropRef.current;
     reset();
     if (!a) return;
-    console.log('[fb] dragend', JSON.stringify(a), JSON.stringify(target));
+    console.log('[fb] dragend', typeof a, Object.keys(a as object).join(','), (a as {kind?:string}).kind, JSON.stringify(target));
 
     if (a.kind === "section") {
       const o = e.over?.data.current as DragData | undefined;
