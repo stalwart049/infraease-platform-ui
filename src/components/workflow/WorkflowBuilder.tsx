@@ -424,9 +424,10 @@ function Editor({ workflowId }: { workflowId: string }) {
           <div className="flex min-w-0 flex-1 flex-col">
             <WorkflowToolbar
               zoom={zoom}
+              zoomLocked={zoomLocked}
               canUndo={editor.canUndo}
               canRedo={editor.canRedo}
-              
+
               snap={snap}
               issueCount={issues?.length ?? 0}
               dirty={editor.dirty}
