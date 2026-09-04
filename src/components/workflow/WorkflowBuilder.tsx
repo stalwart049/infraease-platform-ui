@@ -100,7 +100,7 @@ function Editor({ workflowId }: { workflowId: string }) {
     const byId = new Map((definition?.nodes ?? []).map((n) => [n.sys_id, n]));
     const sizeOf = (n?: WorkflowNode) => {
       const compact = n?.type === "start" || n?.type === "end";
-      return { w: compact ? 192 : 288, h: compact ? 76 : 116 };
+      return { w: compact ? 176 : 256, h: compact ? 76 : 116 };
     };
     // pick the side of the target the edge should approach from
     const sides = list.map((c) => {
@@ -474,7 +474,7 @@ function Editor({ workflowId }: { workflowId: string }) {
                 minZoom={0.2}
                 maxZoom={2}
                 fitView
-                fitViewOptions={{ padding: 0.25, maxZoom: 1 }}
+                fitViewOptions={{ padding: 0.2, minZoom: 0.85, maxZoom: 1 }}
                 elementsSelectable
                 edgesFocusable
                 deleteKeyCode={null}

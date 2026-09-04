@@ -81,7 +81,7 @@ export function WorkflowNodeCard({ data, selected }: NodeProps<WFNode>) {
       }}
       className={cn(
         "group relative cursor-grab rounded-[6px] border bg-surface shadow-sm transition-colors active:cursor-grabbing",
-        compact ? "w-48" : "w-72",
+        compact ? "w-44" : "w-64",
         selected ? "border-primary ring-2 ring-primary/40" : "border-border hover:border-primary/50",
         invalid && "border-destructive ring-1 ring-destructive/40",
         node.disabled && "opacity-50",
