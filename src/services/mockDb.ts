@@ -223,6 +223,49 @@ const definitions: Record<string, TableDefinition> = {
       { name: "warranty_expires", label: "Warranty Expires", type: "date", icon: "calendar" },
     ],
   },
+  business_rule: {
+    table: {
+      name: "business_rule",
+      label: "Business Rule",
+      plural_label: "Business Rules",
+      display_field: "name",
+      id_field: "sys_id",
+    },
+    seedCount: 12,
+    listColumns: ["name", "table_name", "when", "order", "active", "updated_at"],
+    sections: [
+      { id: "details", label: "Details", fields: ["name", "table_name", "when", "order", "active"] },
+      { id: "script", label: "Script", fields: ["description", "script"] },
+    ],
+    fields: [
+      { name: "name", label: "Name", type: "text", mandatory: true, max_length: 80, icon: "file-code", width: 280 },
+      {
+        name: "table_name",
+        label: "Table",
+        type: "select",
+        mandatory: true,
+        choices: choice("Incident", "Request", "Asset", "User", "Department"),
+        width: 150,
+      },
+      {
+        name: "when",
+        label: "When",
+        type: "select",
+        choices: choice("Before", "After", "Async", "Display"),
+        width: 120,
+      },
+      { name: "order", label: "Order", type: "number", min: 0, max: 10000, width: 100 },
+      { name: "active", label: "Active", type: "boolean", width: 90 },
+      { name: "description", label: "Description", type: "textarea", icon: "file-text" },
+      {
+        name: "script",
+        label: "Script",
+        type: "script",
+        hint: "Server-side script. It runs on the platform, never in the browser.",
+      },
+      { name: "updated_at", label: "Updated", type: "datetime", readonly: true, icon: "clock", width: 170 },
+    ],
+  },
 };
 
 // Generic fallback so ANY table name renders something sensible.
