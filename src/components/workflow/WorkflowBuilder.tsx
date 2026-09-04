@@ -88,21 +88,56 @@ function Editor({ workflowId }: { workflowId: string }) {
     [definition, selection.nodes],
   );
 
-  const edges = useMemo<Edge[]>(
-    () =>
-      (definition?.connections ?? []).map((c) => ({
+  const edges = useMemo<Edge[]>(() => {
+    const list = definition?.connections ?? [];
+    const byId = new Map((definition?.nodes ?? []).map((n) => [n.sys_id, n]));
+    const sizeOf = (n?: WorkflowNode) => {
+      const compact = n?.type === "start" || n?.type === "end";
+      return { w: compact ? 192 : 288, h: compact ? 76 : 116 };
+    };
+    // pick the side of the target the edge should approach from
+    const sides = list.map((c) => {
+      const s = byId.get(c.source);
+      const t = byId.get(c.target);
+      if (!s || !t) return "left" as TargetSide;
+      const ss = sizeOf(s);
+      const ts = sizeOf(t);
+      const dx = t.position.x + ts.w / 2 - (s.position.x + ss.w / 2);
+      const dy = t.position.y + ts.h / 2 - (s.position.y + ss.h / 2);
+      if (Math.abs(dx) >= Math.abs(dy) * 0.7) return (dx >= 0 ? "left" : "right") as TargetSide;
+      return (dy >= 0 ? "top" : "bottom") as TargetSide;
+    });
+    // spread multiple incoming edges on the same side across the three slots
+    const order = [1, 0, 2];
+    const used = new Map<string, number>();
+    return list.map((c, i) => {
+      const side = sides[i]!;
+      const key = `${c.target}|${side}`;
+      const n = used.get(key) ?? 0;
+      used.set(key, n + 1);
+      const slot = order[n % order.length]!;
+      const isSelected = selection.edges.includes(c.sys_id);
+      return {
         id: c.sys_id,
         source: c.source,
         sourceHandle: c.source_handle,
         target: c.target,
-        targetHandle: c.target_handle,
+        targetHandle: targetHandleId(side, slot),
         type: "smoothstep",
-        selected: selection.edges.includes(c.sys_id),
-        markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16 },
-        style: { strokeWidth: selection.edges.includes(c.sys_id) ? 2.5 : 1.5 },
-      })),
-    [definition, selection.edges],
-  );
+        selected: isSelected,
+        selectable: true,
+        focusable: true,
+        deletable: true,
+        interactionWidth: 24,
+        markerEnd: { type: MarkerType.ArrowClosed, width: 18, height: 18 },
+        style: {
+          strokeWidth: isSelected ? 3 : 1.75,
+          ...(isSelected ? { stroke: "hsl(var(--primary))" } : {}),
+        },
+      } satisfies Edge;
+    });
+  }, [definition, selection.edges]);
+
 
   // ------------------------------------------------------------- graph edits
 
