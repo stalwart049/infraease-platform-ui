@@ -248,3 +248,88 @@ export interface ActivityStreamData {
   entries: ActivityEntry[];
   can_post: boolean;
 }
+
+// ------------------------------------------------------------- form builder
+
+export type JournalType = "comments" | "work_notes" | "activity_stream";
+
+export interface FormViewTableRef {
+  sys_id: string;
+  name: string;
+  display_value: string;
+}
+
+export interface FormViewFieldRef {
+  sys_id: string;
+  name: string;
+  display_value: string;
+  /** backend field type, e.g. "string", "reference", "boolean" */
+  type: string;
+}
+
+export interface FormViewFieldItem {
+  sys_id: string;
+  type: "field";
+  field: FormViewFieldRef;
+  order: number;
+  properties: { mandatory: boolean; readonly: boolean; visible: boolean };
+}
+
+export interface FormViewJournalItem {
+  sys_id: string;
+  type: "journal";
+  journalType: JournalType;
+  label: string;
+  order: number;
+  properties: { visible: boolean };
+}
+
+export type FormViewItem = FormViewFieldItem | FormViewJournalItem;
+
+export interface FormViewSection {
+  sys_id: string;
+  name: string;
+  order: number;
+  fields: FormViewItem[];
+}
+
+export interface FormViewConfig {
+  sys_id: string;
+  name: string;
+  table: FormViewTableRef;
+  sections: FormViewSection[];
+}
+
+export interface FormViewPayload {
+  formView: FormViewConfig;
+}
+
+export type ClientScriptType = "onLoad" | "onChange" | "onSubmit" | "onCellEdit";
+
+/** Read-only association. The form builder never creates or edits these. */
+export interface ClientScriptRef {
+  sys_id: string;
+  name: string;
+  type: ClientScriptType;
+  field: string;
+  table: string;
+  active: boolean;
+  route?: string;
+}
+
+export interface JournalComponentMeta {
+  journalType: JournalType;
+  label: string;
+  description: string;
+}
+
+/** Everything the form builder needs to render, from the API. */
+export interface FormBuilderData {
+  formView: FormViewConfig;
+  /** every field of the table, placed or not */
+  fields: FormViewFieldRef[];
+  journalComponents: JournalComponentMeta[];
+  /** keyed by field name */
+  clientScripts: Record<string, ClientScriptRef[]>;
+  views: { sys_id: string; name: string }[];
+}
