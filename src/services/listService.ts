@@ -147,9 +147,14 @@ export const listService = {
       if (sortBy) {
         rows.sort((a, b) => compare(a[sortBy], b[sortBy]) * (sortOrder === "desc" ? -1 : 1));
       }
-      // grouping is applied before pagination so a page never interleaves groups
+      // when grouping, every group is returned complete so header counts always
+      // match the rows rendered inside the group
       if (groupBy) {
-        const keys = [...new Set(rows.map((r) => groupKey(r[groupBy])))];
+        const keys = [...new Set(rows.map((r) => groupKey(r[groupBy])))].sort((a, b) => {
+          if (a === "") return 1;
+          if (b === "") return -1;
+          return a.localeCompare(b);
+        });
         const rank = new Map(keys.map((k, i) => [k, i]));
         rows = rows
           .map((row, i) => ({ row, i }))
@@ -159,6 +164,16 @@ export const listService = {
             return ka - kb || a.i - b.i;
           })
           .map((x) => x.row);
+
+        return {
+          content: rows,
+          page: 0,
+          pageSize: rows.length,
+          totalElements: rows.length,
+          totalPages: 1,
+          group_by: groupBy,
+          groups: buildGroups(tableName, groupBy, rows, rows),
+        };
       }
       const totalElements = rows.length;
       const totalPages = Math.max(1, Math.ceil(totalElements / pageSize));

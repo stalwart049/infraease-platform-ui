@@ -215,11 +215,7 @@ export function ListTable({
                     >
                       <Icon name={isCollapsed ? "chevron-right" : "chevron-down"} className="size-3.5" />
                       <span>{group.label}</span>
-                      <span className="font-normal text-muted-foreground">
-                        {group.page_count < group.count
-                          ? `(${group.page_count} of ${group.count})`
-                          : `(${group.count})`}
-                      </span>
+                      <span className="font-normal text-muted-foreground">({group.count})</span>
                     </button>
                   </td>
                 </tr>
