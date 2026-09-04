@@ -28,7 +28,7 @@ export function ScriptFieldEditor({ value, onChange, disabled, height = 400 }: S
       value={value}
       onChange={(v) => onChange(v ?? "")}
       options={{
-        readOnly: disabled,
+        readOnly: !!disabled,
         lineNumbers: "on",
         folding: true,
         matchBrackets: "always",
