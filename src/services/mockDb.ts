@@ -645,6 +645,7 @@ export const MENUS: MenuNode[] = [
         label: "Platform",
         icon: "settings",
         children: [
+          { id: "business_rules", label: "Business Rules", icon: "file-code", route: "/list/business_rule" },
           { id: "tables", label: "Tables", icon: "table", route: "/list/sys_db_table" },
           { id: "custom_table", label: "Custom Table", icon: "layers", route: "/list/custom_table" },
         ],
@@ -719,6 +720,7 @@ export const SEARCHABLE_TABLES: { table: string; icon: string; subtitle_field?: 
   { table: "asset", icon: "laptop", subtitle_field: "model" },
   { table: "sys_user", icon: "user", subtitle_field: "title" },
   { table: "department", icon: "building", subtitle_field: "cost_center" },
+  { table: "business_rule", icon: "file-code", subtitle_field: "table_name" },
 ];
 
 export const ACTIVITY_TYPES: ActivityTypeMeta[] = [
