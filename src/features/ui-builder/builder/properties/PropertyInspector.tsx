@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Icon } from "@/components/common/Icon";
 import { cn } from "@/lib/utils";
-import type { Breakpoint, LayoutConfig, StyleConfig, UiNode } from "../../models/ui";
+import type { Binding, Breakpoint, LayoutConfig, StyleConfig, UiNode } from "../../models/ui";
 import { BREAKPOINTS } from "../../models/ui";
 import type { UiBuilderState } from "../../state/useUiBuilder";
 import { BindingEditor } from "../bindings/BindingEditor";
@@ -220,7 +220,7 @@ function LayoutTab({ builder, node }: { builder: UiBuilderState; node: UiNode })
         <Field label="Alignment">
           <SelectInput
             value={layout.align ?? ""}
-            onChange={(v) => patch({ align: v as LayoutConfig["align"] })}
+            onChange={(v) => patch({ align: (v || "start") as NonNullable<LayoutConfig["align"]> })}
             options={[
               { value: "start", label: "Start" },
               { value: "center", label: "Center" },
@@ -291,11 +291,11 @@ function DataTab({ builder, node }: { builder: UiBuilderState; node: UiNode }) {
   const widgetSlots = definition?.dataAware ? ["rows", "record", "series", "records", "events", "query", "data"] : [];
   const slots = Array.from(new Set([...widgetSlots.filter((s) => definition?.dataAware), ...bindable.map((p) => p.name)]));
 
-  const setBinding = (name: string, binding: ReturnType<typeof Object> | undefined) =>
+  const setBinding = (name: string, binding: Binding | undefined) =>
     builder.updateNode(node.id, (n) => {
       const bindings = { ...n.bindings };
       if (binding === undefined) delete bindings[name];
-      else bindings[name] = binding as never;
+      else bindings[name] = binding;
       return { ...n, bindings };
     });
 
