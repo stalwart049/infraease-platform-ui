@@ -13,7 +13,15 @@ const ICONS: Record<Breakpoint, string> = { desktop: "monitor", tablet: "tablet"
  * Preview surface. It renders the widget shell the runtime will produce and
  * shows the development context (properties + data returned by server.js).
  */
-export function WidgetPreview({ widget, onClose }: { widget: WidgetDefinition; onClose: () => void }) {
+export function WidgetPreview({
+  widget,
+  onClose,
+  embedded = false,
+}: {
+  widget: WidgetDefinition;
+  onClose?: () => void;
+  embedded?: boolean;
+}) {
   const [breakpoint, setBreakpoint] = useState<Breakpoint>("desktop");
   const [properties, setProperties] = useState<Record<string, string>>(() => widgetRuntime.resolveProperties(widget));
   const [data, setData] = useState<unknown>(null);
@@ -35,7 +43,14 @@ export function WidgetPreview({ widget, onClose }: { widget: WidgetDefinition; o
   const stats = ((data as { stats?: { key: string; label: string; value: string | number }[] } | null)?.stats) ?? [];
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-background/95 backdrop-blur-sm" role="dialog" aria-modal="true" aria-label="Widget preview">
+    <div
+      className={cn(
+        "flex min-h-0 flex-col bg-background",
+        embedded ? "h-full" : "fixed inset-0 z-50 bg-background/95 backdrop-blur-sm",
+      )}
+      {...(!embedded ? { role: "dialog", "aria-modal": true } : {})}
+      aria-label="Widget preview"
+    >
       <header className="flex h-11 shrink-0 items-center gap-2 border-b border-border bg-surface px-3">
         <Icon name="eye" className="size-4 text-primary" />
         <span className="text-[13px] font-semibold text-foreground">Preview · {widget.label}</span>
@@ -55,14 +70,16 @@ export function WidgetPreview({ widget, onClose }: { widget: WidgetDefinition; o
             </button>
           ))}
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="ml-2 inline-flex h-7 items-center gap-1 rounded-[3px] border border-border px-2 text-[12.5px] text-foreground hover:bg-muted"
-        >
-          <Icon name="x" className="size-3.5" />
-          Close
-        </button>
+        {onClose && (
+          <button
+            type="button"
+            onClick={onClose}
+            className="ml-2 inline-flex h-7 items-center gap-1 rounded-[3px] border border-border px-2 text-[12.5px] text-foreground hover:bg-muted"
+          >
+            <Icon name="x" className="size-3.5" />
+            Close
+          </button>
+        )}
       </header>
 
       <div className="flex min-h-0 flex-1">

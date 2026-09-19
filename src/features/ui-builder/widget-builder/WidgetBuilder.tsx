@@ -22,7 +22,7 @@ const PANELS: { id: SidePanel; label: string; icon: string }[] = [
 export function WidgetBuilder({ widgetId }: { widgetId: string }) {
   const state = useWidgetBuilder(widgetId);
   const [panel, setPanel] = useState<SidePanel>("information");
-  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewActive, setPreviewActive] = useState(false);
   const editorRef = useRef<EditorHandle | null>(null);
   const widget = state.widget;
 
@@ -67,14 +67,11 @@ export function WidgetBuilder({ widgetId }: { widgetId: string }) {
         <div className="ml-auto flex items-center gap-1">
           <ActionButton icon="undo-2" aria-label="Undo" onClick={state.undo} disabled={!state.canUndo} />
           <ActionButton icon="redo-2" aria-label="Redo" onClick={state.redo} disabled={!state.canRedo} />
-          <ActionButton icon="wand-sparkles" onClick={() => editorRef.current?.format()}>
+          <ActionButton icon="wand-sparkles" onClick={() => editorRef.current?.format()} disabled={previewActive}>
             Format
           </ActionButton>
-          <ActionButton icon="search" aria-label="Find in file" onClick={() => editorRef.current?.find()} />
+          <ActionButton icon="search" aria-label="Find in file" onClick={() => editorRef.current?.find()} disabled={previewActive} />
           <span className="mx-1 h-5 w-px bg-border" />
-          <ActionButton icon="eye" onClick={() => setPreviewOpen(true)}>
-            Preview
-          </ActionButton>
           <ActionButton icon="save" variant="primary" loading={state.saving} onClick={() => void state.save()}>
             Save
           </ActionButton>
@@ -101,10 +98,13 @@ export function WidgetBuilder({ widgetId }: { widgetId: string }) {
               <li key={file.id}>
                 <button
                   type="button"
-                  onClick={() => state.openFile(file.id)}
+                  onClick={() => {
+                    setPreviewActive(false);
+                    state.openFile(file.id);
+                  }}
                   className={cn(
                     "flex w-full items-center gap-2 rounded-[3px] px-2 py-1.5 text-left text-[12.5px]",
-                    state.activeFile === file.id ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-muted",
+                    !previewActive && state.activeFile === file.id ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-muted",
                   )}
                 >
                   <Icon name={file.icon} className="size-3.5 text-muted-foreground" />
@@ -113,6 +113,19 @@ export function WidgetBuilder({ widgetId }: { widgetId: string }) {
                 </button>
               </li>
             ))}
+            <li className="mt-1 border-t border-border pt-1">
+              <button
+                type="button"
+                onClick={() => setPreviewActive(true)}
+                className={cn(
+                  "flex w-full items-center gap-2 rounded-[3px] px-2 py-1.5 text-left text-[12.5px]",
+                  previewActive ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-muted",
+                )}
+              >
+                <Icon name="eye" className="size-3.5 text-muted-foreground" />
+                <span>Preview</span>
+              </button>
+            </li>
           </ul>
           <div className="mt-auto border-t border-border p-2 text-[11px] leading-4 text-muted-foreground">
             React component ← client.js ← server.js ← InfraEase data
@@ -133,7 +146,14 @@ export function WidgetBuilder({ widgetId }: { widgetId: string }) {
                     active ? "bg-background font-medium text-foreground" : "text-muted-foreground hover:text-foreground",
                   )}
                 >
-                  <button type="button" onClick={() => state.openFile(fileId)} className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPreviewActive(false);
+                      state.openFile(fileId);
+                    }}
+                    className="flex items-center gap-1.5"
+                  >
                     <Icon name={meta.icon} className="size-3.5" />
                     {meta.fileName}
                     {state.dirtyFiles.includes(fileId) && <span className="size-1.5 rounded-full bg-warning" />}
@@ -149,19 +169,36 @@ export function WidgetBuilder({ widgetId }: { widgetId: string }) {
                 </div>
               );
             })}
-            <span className="ml-auto flex items-center gap-2 px-3 text-[11.5px] text-muted-foreground">
-              {activeMeta.language.toUpperCase()} · {widget.files[state.activeFile].split("\n").length} lines
-            </span>
+            {previewActive && (
+              <div className="group flex items-center gap-1.5 border-r border-border bg-background px-2.5 text-[12px] font-medium text-foreground">
+                <button type="button" onClick={() => setPreviewActive(true)} className="flex items-center gap-1.5">
+                  <Icon name="eye" className="size-3.5" />
+                  Preview
+                </button>
+                <button type="button" aria-label="Close preview" onClick={() => setPreviewActive(false)}>
+                  <Icon name="x" className="size-3" />
+                </button>
+              </div>
+            )}
+            {!previewActive && (
+              <span className="ml-auto flex items-center gap-2 px-3 text-[11.5px] text-muted-foreground">
+                {activeMeta.language.toUpperCase()} · {widget.files[state.activeFile].split("\n").length} lines
+              </span>
+            )}
           </div>
 
           <div className="min-h-0 flex-1 bg-background">
-            <CodeEditor
-              key={state.activeFile}
-              value={widget.files[state.activeFile]}
-              language={activeMeta.language}
-              onChange={(content) => state.setFile(state.activeFile, content)}
-              handleRef={editorRef}
-            />
+            {previewActive ? (
+              <WidgetPreview widget={widget} embedded />
+            ) : (
+              <CodeEditor
+                key={state.activeFile}
+                value={widget.files[state.activeFile]}
+                language={activeMeta.language}
+                onChange={(content) => state.setFile(state.activeFile, content)}
+                handleRef={editorRef}
+              />
+            )}
           </div>
         </div>
 
@@ -220,8 +257,6 @@ export function WidgetBuilder({ widgetId }: { widgetId: string }) {
           </div>
         </aside>
       </div>
-
-      {previewOpen && <WidgetPreview widget={widget} onClose={() => setPreviewOpen(false)} />}
     </div>
   );
 }
