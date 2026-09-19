@@ -288,8 +288,7 @@ function StyleTab({ builder, node }: { builder: UiBuilderState; node: UiNode }) 
 function DataTab({ builder, node }: { builder: UiBuilderState; node: UiNode }) {
   const definition = builder.definitions[node.type];
   const bindable = (definition?.properties ?? []).filter((p) => p.bindable);
-  const widgetSlots = definition?.dataAware ? ["rows", "record", "series", "records", "events", "query", "data"] : [];
-  const slots = Array.from(new Set([...widgetSlots.filter((s) => definition?.dataAware), ...bindable.map((p) => p.name)]));
+  const slots = Array.from(new Set([...(definition?.dataAware ? ["data"] : []), ...bindable.map((p) => p.name)]));
 
   const setBinding = (name: string, binding: Binding | undefined) =>
     builder.updateNode(node.id, (n) => {
