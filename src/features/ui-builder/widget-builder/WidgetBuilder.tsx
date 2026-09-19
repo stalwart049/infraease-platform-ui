@@ -22,6 +22,7 @@ const PANELS: { id: SidePanel; label: string; icon: string }[] = [
 export function WidgetBuilder({ widgetId }: { widgetId: string }) {
   const state = useWidgetBuilder(widgetId);
   const [panel, setPanel] = useState<SidePanel>("information");
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [previewActive, setPreviewActive] = useState(false);
   const editorRef = useRef<EditorHandle | null>(null);
   const widget = state.widget;
@@ -116,7 +117,10 @@ export function WidgetBuilder({ widgetId }: { widgetId: string }) {
             <li className="mt-1 border-t border-border pt-1">
               <button
                 type="button"
-                onClick={() => setPreviewActive(true)}
+                onClick={() => {
+                  setPreviewOpen(true);
+                  setPreviewActive(true);
+                }}
                 className={cn(
                   "flex w-full items-center gap-2 rounded-[3px] px-2 py-1.5 text-left text-[12.5px]",
                   previewActive ? "bg-accent text-accent-foreground" : "text-foreground hover:bg-muted",
@@ -169,13 +173,25 @@ export function WidgetBuilder({ widgetId }: { widgetId: string }) {
                 </div>
               );
             })}
-            {previewActive && (
-              <div className="group flex items-center gap-1.5 border-r border-border bg-background px-2.5 text-[12px] font-medium text-foreground">
+            {previewOpen && (
+              <div
+                className={cn(
+                  "group flex items-center gap-1.5 border-r border-border px-2.5 text-[12px]",
+                  previewActive ? "bg-background font-medium text-foreground" : "text-muted-foreground hover:text-foreground",
+                )}
+              >
                 <button type="button" onClick={() => setPreviewActive(true)} className="flex items-center gap-1.5">
                   <Icon name="eye" className="size-3.5" />
                   Preview
                 </button>
-                <button type="button" aria-label="Close preview" onClick={() => setPreviewActive(false)}>
+                <button
+                  type="button"
+                  aria-label="Close preview"
+                  onClick={() => {
+                    setPreviewOpen(false);
+                    setPreviewActive(false);
+                  }}
+                >
                   <Icon name="x" className="size-3" />
                 </button>
               </div>
