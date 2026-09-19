@@ -655,6 +655,8 @@ export const MENUS: MenuNode[] = [
           { id: "business_rules", label: "Business Rules", icon: "file-code", route: "/list/business_rule" },
           { id: "form_builder", label: "Form Builder", icon: "layout-template", route: "/builder/incident" },
           { id: "workflows", label: "Workflows", icon: "workflow", route: "/workflow" },
+          { id: "ui_builder", label: "UI Builder", icon: "layout-dashboard", route: "/ui-builder" },
+          { id: "widget_builder", label: "Widget Builder", icon: "puzzle", route: "/widget-builder" },
           { id: "tables", label: "Tables", icon: "table", route: "/list/sys_db_table" },
           { id: "custom_table", label: "Custom Table", icon: "layers", route: "/list/custom_table" },
         ],

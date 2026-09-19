@@ -13,6 +13,10 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as SearchRouteImport } from './routes/search'
 import { Route as BuilderTableNameRouteImport } from './routes/builder.$tableName'
 import { Route as ListTableNameRouteImport } from './routes/list.$tableName'
+import { Route as UiBuilderIndexRouteImport } from './routes/ui-builder.index'
+import { Route as UiBuilderPageIdRouteImport } from './routes/ui-builder.$pageId'
+import { Route as WidgetBuilderIndexRouteImport } from './routes/widget-builder.index'
+import { Route as WidgetBuilderWidgetIdRouteImport } from './routes/widget-builder.$widgetId'
 import { Route as WorkflowIndexRouteImport } from './routes/workflow.index'
 import { Route as WorkflowWorkflowIdRouteImport } from './routes/workflow.$workflowId'
 import { Route as FormTableNameIndexRouteImport } from './routes/form.$tableName.index'
@@ -36,6 +40,26 @@ const BuilderTableNameRoute = BuilderTableNameRouteImport.update({
 const ListTableNameRoute = ListTableNameRouteImport.update({
   id: '/list/$tableName',
   path: '/list/$tableName',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UiBuilderIndexRoute = UiBuilderIndexRouteImport.update({
+  id: '/ui-builder/',
+  path: '/ui-builder/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const UiBuilderPageIdRoute = UiBuilderPageIdRouteImport.update({
+  id: '/ui-builder/$pageId',
+  path: '/ui-builder/$pageId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WidgetBuilderIndexRoute = WidgetBuilderIndexRouteImport.update({
+  id: '/widget-builder/',
+  path: '/widget-builder/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const WidgetBuilderWidgetIdRoute = WidgetBuilderWidgetIdRouteImport.update({
+  id: '/widget-builder/$widgetId',
+  path: '/widget-builder/$widgetId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const WorkflowIndexRoute = WorkflowIndexRouteImport.update({
@@ -64,7 +88,11 @@ export interface FileRoutesByFullPath {
   '/search': typeof SearchRoute
   '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
+  '/ui-builder/$pageId': typeof UiBuilderPageIdRoute
+  '/widget-builder/$widgetId': typeof WidgetBuilderWidgetIdRoute
   '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
+  '/ui-builder/': typeof UiBuilderIndexRoute
+  '/widget-builder/': typeof WidgetBuilderIndexRoute
   '/workflow/': typeof WorkflowIndexRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName/': typeof FormTableNameIndexRoute
@@ -74,7 +102,11 @@ export interface FileRoutesByTo {
   '/search': typeof SearchRoute
   '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
+  '/ui-builder/$pageId': typeof UiBuilderPageIdRoute
+  '/widget-builder/$widgetId': typeof WidgetBuilderWidgetIdRoute
   '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
+  '/ui-builder': typeof UiBuilderIndexRoute
+  '/widget-builder': typeof WidgetBuilderIndexRoute
   '/workflow': typeof WorkflowIndexRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName': typeof FormTableNameIndexRoute
@@ -85,7 +117,11 @@ export interface FileRoutesById {
   '/search': typeof SearchRoute
   '/builder/$tableName': typeof BuilderTableNameRoute
   '/list/$tableName': typeof ListTableNameRoute
+  '/ui-builder/$pageId': typeof UiBuilderPageIdRoute
+  '/widget-builder/$widgetId': typeof WidgetBuilderWidgetIdRoute
   '/workflow/$workflowId': typeof WorkflowWorkflowIdRoute
+  '/ui-builder/': typeof UiBuilderIndexRoute
+  '/widget-builder/': typeof WidgetBuilderIndexRoute
   '/workflow/': typeof WorkflowIndexRoute
   '/form/$tableName/$recordId': typeof FormTableNameRecordIdRoute
   '/form/$tableName/': typeof FormTableNameIndexRoute
@@ -97,7 +133,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/builder/$tableName'
     | '/list/$tableName'
+    | '/ui-builder/$pageId'
+    | '/widget-builder/$widgetId'
     | '/workflow/$workflowId'
+    | '/ui-builder/'
+    | '/widget-builder/'
     | '/workflow/'
     | '/form/$tableName/$recordId'
     | '/form/$tableName/'
@@ -107,7 +147,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/builder/$tableName'
     | '/list/$tableName'
+    | '/ui-builder/$pageId'
+    | '/widget-builder/$widgetId'
     | '/workflow/$workflowId'
+    | '/ui-builder'
+    | '/widget-builder'
     | '/workflow'
     | '/form/$tableName/$recordId'
     | '/form/$tableName'
@@ -117,7 +161,11 @@ export interface FileRouteTypes {
     | '/search'
     | '/builder/$tableName'
     | '/list/$tableName'
+    | '/ui-builder/$pageId'
+    | '/widget-builder/$widgetId'
     | '/workflow/$workflowId'
+    | '/ui-builder/'
+    | '/widget-builder/'
     | '/workflow/'
     | '/form/$tableName/$recordId'
     | '/form/$tableName/'
@@ -128,7 +176,11 @@ export interface RootRouteChildren {
   SearchRoute: typeof SearchRoute
   BuilderTableNameRoute: typeof BuilderTableNameRoute
   ListTableNameRoute: typeof ListTableNameRoute
+  UiBuilderPageIdRoute: typeof UiBuilderPageIdRoute
+  WidgetBuilderWidgetIdRoute: typeof WidgetBuilderWidgetIdRoute
   WorkflowWorkflowIdRoute: typeof WorkflowWorkflowIdRoute
+  UiBuilderIndexRoute: typeof UiBuilderIndexRoute
+  WidgetBuilderIndexRoute: typeof WidgetBuilderIndexRoute
   WorkflowIndexRoute: typeof WorkflowIndexRoute
   FormTableNameRecordIdRoute: typeof FormTableNameRecordIdRoute
   FormTableNameIndexRoute: typeof FormTableNameIndexRoute
@@ -162,6 +214,34 @@ declare module '@tanstack/react-router' {
       path: '/list/$tableName'
       fullPath: '/list/$tableName'
       preLoaderRoute: typeof ListTableNameRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ui-builder/': {
+      id: '/ui-builder/'
+      path: '/ui-builder'
+      fullPath: '/ui-builder/'
+      preLoaderRoute: typeof UiBuilderIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ui-builder/$pageId': {
+      id: '/ui-builder/$pageId'
+      path: '/ui-builder/$pageId'
+      fullPath: '/ui-builder/$pageId'
+      preLoaderRoute: typeof UiBuilderPageIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/widget-builder/': {
+      id: '/widget-builder/'
+      path: '/widget-builder'
+      fullPath: '/widget-builder/'
+      preLoaderRoute: typeof WidgetBuilderIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/widget-builder/$widgetId': {
+      id: '/widget-builder/$widgetId'
+      path: '/widget-builder/$widgetId'
+      fullPath: '/widget-builder/$widgetId'
+      preLoaderRoute: typeof WidgetBuilderWidgetIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/workflow/': {
@@ -200,7 +280,11 @@ const rootRouteChildren: RootRouteChildren = {
   SearchRoute: SearchRoute,
   BuilderTableNameRoute: BuilderTableNameRoute,
   ListTableNameRoute: ListTableNameRoute,
+  UiBuilderPageIdRoute: UiBuilderPageIdRoute,
+  WidgetBuilderWidgetIdRoute: WidgetBuilderWidgetIdRoute,
   WorkflowWorkflowIdRoute: WorkflowWorkflowIdRoute,
+  UiBuilderIndexRoute: UiBuilderIndexRoute,
+  WidgetBuilderIndexRoute: WidgetBuilderIndexRoute,
   WorkflowIndexRoute: WorkflowIndexRoute,
   FormTableNameRecordIdRoute: FormTableNameRecordIdRoute,
   FormTableNameIndexRoute: FormTableNameIndexRoute,

@@ -22,6 +22,16 @@ export function menuLinkProps(route: string) {
   if (parts[0] === "search") {
     return { to: "/search" as const };
   }
+  if (parts[0] === "ui-builder") {
+    return parts[1]
+      ? ({ to: "/ui-builder/$pageId" as const, params: { pageId: parts[1] } })
+      : ({ to: "/ui-builder" as const });
+  }
+  if (parts[0] === "widget-builder") {
+    return parts[1]
+      ? ({ to: "/widget-builder/$widgetId" as const, params: { widgetId: parts[1] } })
+      : ({ to: "/widget-builder" as const });
+  }
   return { to: "/list/$tableName" as const, params: { tableName: parts[1] ?? "incident" } };
 }
 
